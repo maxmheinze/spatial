@@ -4,6 +4,10 @@
 
 pacman::p_load(MASS)
 
+
+
+# Check Column Names ------------------------------------------------------
+
 colnames(Boston)
 
 
