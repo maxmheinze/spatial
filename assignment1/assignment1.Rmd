@@ -98,7 +98,7 @@ boston_quick_ols("medv", "rm", "age", "dis", "nox")
 
 ## Creating a Graph and an Adjacency Matrix
 
-We chose the network of all first-district Vienna subway stations. The graph and the adjacency matrix can be found below. Nodes represent individual stations, and edges represent direct subway connections between two stations, without passing another station or changing to another line. We abstract from the existence of different subway lines. The two-character node labels are to be read as follows: ST is Schottentor, SR is Schottenring, SE is Schwedenplatz, LS is Landstraße, SK is Stadtpark, KP is Karlsplatz, SU is Stubentor, SP is Stephansplatz, HG is Herrengasse, and VT is Volkstheater.
+We chose the network of all first-district Vienna subway stations. The graph and the adjacency matrix can be found below. Nodes represent individual stations, and edges represent direct subway connections between two stations, without passing another station or changing to another line. We abstract from the existence of different subway lines and from the existence of other stations outside the first district as well as links to these stations. The two-character node labels are to be read as follows: ST is Schottentor, SR is Schottenring, SE is Schwedenplatz, LS is Landstraße, SK is Stadtpark, KP is Karlsplatz, SU is Stubentor, SP is Stephansplatz, HG is Herrengasse, and VT is Volkstheater.
 
 ```{r, out.width = "60%", fig.align='center'}
 # Header ------------------------------------------------------------------
@@ -162,4 +162,191 @@ plot(graph_1,
 
 knitr::kable(adj_matrix)
 ```
+
+## Centrality
+
+Our graph is undirected, and thus the simplest notion of centrality that we can investigate is the nodes' **degree**. We can compute the degree by simply calculating the row sums of the adjacency matrix. The result, given in the table below, is that Stephansplatz is the most central station, having 4 links, and Volkstheater and Schottentor are the least central stations, having one link each.
+
+```{r}
+knitr::kable(rowSums(adj_matrix), col.names = c("degree centrality"))
+```
+
+Alternatively, we can calculate the nodes' **Eigenvector centrality**. Eigenvector centrality is a centrality measure that takes into account how influential (central) the nodes bordering some node are, where being connected to a more influential node is “rewarded” with a higher centrality measure. To describe the notion mathematically, let $N$ be the set of nodes in the graph from above, and let $H(n)$ be the set of neighbors of some node $n$ ($H$ in this case stands for the *hood*). Let now $i$ and $j$ be two nodes that are in $N$. We can define a centrality measure $c_n$ such that
+
+$$
+c_i^{\text{eigenvector}} = \alpha \sum_{j \in H(i)} c_j = \alpha \sum_{j\in N} a_{i,j} c_j,
+$$
+where $a_{i,j}$ is an element of the adjacency matrix and $\alpha$ is some constant. The latter equality follows quite straightforwardly from the fact that $a_{i,j}=0$ if $j\notin H(i)$ and $a_{i,j}=1$ if $j\in H(i)$, i.e., the definition of the adjacency matrix. If we now let $\alpha = \tfrac{1}{\lambda}$, this can be written as
+
+$$
+\boldsymbol{Ac} = \lambda\boldsymbol{c},
+$$
+
+which means that $\boldsymbol{c}$ is an eigenvector of $\boldsymbol{A}$ corresponding to eigenvalue $\lambda$. It follows from the Perron–Frobenius Theorem that there is exactly one (except multiples of itself) eigenvector with all non-negative entries (which is what we desire for the centrality measure) and that it corresponds to the largest of the eigenvalues. Conveniently, the `igraph` package has a function that does the calculations for us. We get the following centrality measures:
+
+```{r}
+eigen_centrality(
+  graph_1,
+  directed = FALSE,
+  scale = TRUE,
+  weights = NULL,
+  options = arpack_defaults()
+) %>%
+  `$`(vector) %>%
+  knitr::kable(col.names = "eigenvector centrality")
+```
+
+Again, Stephansplatz is the most central station. Schottentor is now the uniquely least central station.
+
+There exist extensions and variations of eigenvector centrality, such as PageRank centrality, but there are also other approaches. One of these other approaches is the notion of **closeness centrality**, a concept where having shorter average shortest path lengths to all other nodes is rewarded. It is defined as
+
+$$
+c_i^{\text{closeness}} = \frac{N-1}{\sum_{j\in N,j\neq i}d(i,j)},
+$$
+where $d(\cdot)$ refers to the length of the shortest average path. Again, we are happy to use the implementation the `igraph` package provides to calculate closeness centrality of our stations.
+
+```{r}
+knitr::kable(closeness(graph_1), col.names = "closeness centrality")
+```
+
+Surprise, surprise: Stephansplatz is the most central station and Schottentor is the least central station.
+
+# Centrality in a Row-Normalized Network
+
+Row-normalizing means that we divide every element in our adjacency matrix by the corresponding row sum. If we do this, we can see that our adjacency matrix is no longer symmetric:
+
+```{r}
+adj_matrix_2 <- adj_matrix / rowSums(adj_matrix)
+
+knitr::kable(round(adj_matrix_2,2))
+```
+
+This means that we can no longer treat our network as an undirected graph, since in-connections and out-connections are differently weighted.
+
+Regarding **degree centrality**, we therefore have to split up our measure into **in-degree** and **out-degree** centrality. Since we normalized row sums, i.e., the sum of outward connections of a node, the out-degree is a somewhat useless measure, since calculating it will always return unity by definition. Calculating the in-degree, however, yields a result:
+
+```{r}
+knitr::kable(colSums(adj_matrix_2), col.names = c("in-degree centrality"))
+```
+
+A high measure can be interpreted as a station being relatively important for its neighbor stations. If a station has only one neighbor station, and that neighbor station has another station that it neighbors, the first station will have a measure of 0.5. In our example, Stephansplatz is the most central station and Schottentor and Volkstheater are the least central stations.
+
+So, we get the same most and least central stations as in the original degree centrality case. Will that always be the case that stations that are more central in the one measure are also more central in the other? No. For a smooth disproof by counterexample, look at nodes SR and SE.
+
+Our measure of **eigenvector centrality** is affected in so far as that in the original formula,
+
+$$
+c_i^{\text{eigenvector}} =\alpha \sum_{j\in N} a_{i,j} c_j,
+$$
+
+$a_{i,j}$ can now assume values between 0 and 1 instead of _just_ 0 and 1. Every value that was 0 before is still 0, but all connections that do exist are now weighted by how many other outgoing connections from a station there are. This makes for a slightly different eigenvector: 
+
+
+```{r}
+adj_matrix_2 <- adj_matrix / rowSums(adj_matrix)
+
+graph_2 <- graph_from_adjacency_matrix(adj_matrix_2, mode = "directed", weighted = TRUE)
+
+
+
+eigen_centrality(
+  graph_2,
+  directed = FALSE,
+  scale = TRUE,
+  weights = NULL,
+  options = arpack_defaults()
+) %>%
+  `$`(vector) %>%
+  knitr::kable(col.names = "eigenvector centrality")
+```
+
+For our measure of **closeness centrality**, we need a definition of “distance” in a weighted graph. Conventionally, weights are in this case interpreted as the “length” of a node, meaning that a low-weighted connection is related to the notion of two nodes being “closer,” and that the distance equals the sum of weights along a path. Since weights *from* a station that has many outgoing connections will be lower (even if incoming connections' weights need not be), having many outgoing connections is rewarded using this measure of centrality with a row-normalized adjacency matrix. We can also see that Stephansplatz gains relatively more compared to the original closeness measure:
+
+```{r}
+
+knitr::kable(closeness(graph_2), col.names = "closeness centrality")
+```
+
+## Removing a node
+
+We remove Stubentor because it might be interesting to see what happens if we remove one of Stephansplatz's connections. Let's see:
+
+```{r, out.width = "60%", fig.align='center'}
+# Header ------------------------------------------------------------------
+pacman::p_load(igraph,
+               extrafont)
+
+
+# Create Matrix -----------------------------------------------------------
+
+# Create the adjacency matrix
+adj_matrix_3 <- matrix(c(
+  0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 1, 0, 0, 0, 0, 0, 0,
+  0, 1, 0, 1, 0, 0, 1, 0, 0,
+  0, 0, 1, 0, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 0, 1, 0, 0, 0,
+  0, 0, 0, 0, 1, 0, 1, 0, 0,
+  0, 0, 1, 0, 0, 1, 0, 1, 0,
+  0, 0, 0, 0, 0, 0, 1, 0, 1,
+  0, 0, 0, 0, 0, 0, 0, 1, 0
+), nrow = 9, byrow = TRUE)
+
+# Define node names
+node_names_3 <- c("ST", "SR", "SE", "LS", "SK", "KP", "SP", "HG", "VT")
+dimnames(adj_matrix_3) <- list(node_names_3, node_names_3)
+
+coords_matrix_3 <- matrix(
+  c(
+    0,   0,
+    3.5,  -1.5,
+    5,    -5,
+    3.5,  -8.5,
+    0,    -10,
+    -3.5, -8.5,
+    0,    -5,
+    -2.5, -5,
+    -5,   -5
+  ), 
+  ncol = 2, byrow = TRUE)
+
+
+# Create graph ------------------------------------------------------------
+
+graph_3 <- graph_from_adjacency_matrix(adj_matrix_3, mode = "undirected")
+
+
+# Output ------------------------------------------------------------------
+
+plot(graph_3,
+     layout = coords_matrix_3,
+     vertex.size = 30, 
+     vertex.color = "#BBBBBB",
+     vertex.label.cex = 1.2, 
+     vertex.label.font = 2, 
+     vertex.label.family = "Lato",
+     vertex.label.color = "black",
+     edge.color = "black",
+     edge.width = 2) 
+
+knitr::kable(adj_matrix_3)
+
+knitr::kable(rowSums(adj_matrix_3), col.names = c("degree centrality"))
+
+eigen_centrality(
+  graph_3,
+  directed = FALSE,
+  scale = TRUE,
+  weights = NULL,
+  options = arpack_defaults()
+) %>%
+  `$`(vector) %>%
+  knitr::kable(col.names = "eigenvector centrality")
+
+knitr::kable(closeness(graph_3), col.names = "closeness centrality")
+```
+
+We can see that Stephansplatz suffers and is now exactly as central as Schwedenplatz. Also, there is no longer a difference between Schottentor and Volkstheater as least central stations using any measure of centrality. This makes intuitive sense since the new graph is now symmetrically consisting of a central “circle” and two “appendices” of length two. 
+
+
 
