@@ -182,3 +182,31 @@ eigen_centrality(
   knitr::kable(col.names = "eigenvector centrality")
 
 knitr::kable(closeness(graph_3), col.names = "closeness centrality")
+
+
+# Simulation --------------------------------------------------------------
+
+set.seed(555)
+
+# Simulate attributes
+coolness <- rnorm(10)
+names(coolness) <- node_names
+
+coolness_peers <- vector(length = 10L)
+names(coolness_peers) <- node_names
+
+for (i in 1:vcount(graph_1)) {
+  nbs <- neighbors(graph_1, i)
+  coolness_peers[i] <- mean(coolness[nbs])
+}
+
+responses <- beta * coolness + gamma * coolness_peers
+
+
+neb <- neighbors(graph_1, 3)
+mean(coolness[neb])
+
+# and now???
+
+
+

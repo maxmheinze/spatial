@@ -5,5 +5,5 @@
 \contentsline {section}{Task B}{3}{section*.6}%
 \contentsline {subsection}{Creating a Graph and an Adjacency Matrix}{3}{section*.7}%
 \contentsline {subsection}{Centrality}{4}{section*.8}%
-\contentsline {section}{Centrality in a Row-Normalized Network}{6}{section*.9}%
+\contentsline {subsection}{Centrality in a Row-Normalized Network}{6}{section*.9}%
 \contentsline {subsection}{Removing a node}{7}{section*.10}%
