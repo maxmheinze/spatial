@@ -84,13 +84,7 @@ eigen_centrality(
 
 # Closeness Centrality ----------------------------------------------------
 
-closeness(graph_1)
-
-```{r}
 knitr::kable(closeness(graph_1), col.names = "closeness centrality")
-```
-
-Surprise, surprise: Stephansplatz is the most central station and Schottentor is the least central station.
 
 # Row Normaling ----------------------------------------------------------
 
