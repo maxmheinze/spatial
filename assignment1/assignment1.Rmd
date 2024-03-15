@@ -211,7 +211,7 @@ knitr::kable(closeness(graph_1), col.names = "closeness centrality")
 
 Surprise, surprise: Stephansplatz is the most central station and Schottentor is the least central station.
 
-# Centrality in a Row-Normalized Network
+## Centrality in a Row-Normalized Network
 
 Row-normalizing means that we divide every element in our adjacency matrix by the corresponding row sum. If we do this, we can see that our adjacency matrix is no longer symmetric:
 
