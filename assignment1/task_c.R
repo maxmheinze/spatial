@@ -5,7 +5,9 @@ pacman::p_load(
   sf,
   data.table,
   readr,
-  eurostat
+  eurostat,
+  RColorBrewer,
+  viridis
 )
 #-------Download NUTS shapefile and data of interest------------------
 temp <- tempfile(fileext = ".zip")
@@ -52,10 +54,26 @@ merged_shp1 <- left_join(shp1, df1, by=c("NUTS_ID"="geo"))
 
 
 #Visualization 1 - Continious scale
+
 ggplot() +
   geom_sf(data = merged_shp1, aes(fill = values)) +
   scale_fill_continuous(name = "Fertility Rate") +
   labs(title = "Fertility Rate by Region")
   theme_minimal()
 
-#Visualization 2
+#Visualization 2 - Discrete scale
+  
+#We cut the values of fertility rate into 5 segments
+ merged_shp1$value_cat <- cut_to_classes(merged_shp1$values, n = 5)
+  
+  
+colors <- viridis(5)
+color_na <- "red"
+ggplot() +
+geom_sf(data = merged_shp1, aes(fill = ifelse(is.na(value_cat), "No Data", as.character(value_cat)))) +  
+scale_fill_manual(name = "Fertility Rate", values = c(color_na, colors), 
+                      breaks = c("No Data", levels(factor(merged_shp1$value_cat)))) +  
+labs(title = "Fertility Rate by Region") +
+theme_minimal()
+  
+  
