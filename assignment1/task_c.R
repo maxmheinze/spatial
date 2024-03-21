@@ -1,9 +1,12 @@
-library(dplyr)
-library(ggplot2)
-library(sf)
-library(data.table)
-library(readr)
-library(eurostat)
+
+pacman::p_load(
+  dplyr,
+  ggplot2,
+  sf,
+  data.table,
+  readr,
+  eurostat
+)
 #-------Download NUTS shapefile and data of interest------------------
 temp <- tempfile(fileext = ".zip")
 

@@ -9,50 +9,33 @@ date: "2024-03-14"
 # install required packages
 install.packages("tmap", repos = "https://r-tmap.github.io/tmap/", type = "source")
 install.packages("spDataLarge", repos = "https://nowosad.github.io/drat/", type = "source")
-install.packages("ggplot2")
-install.packages("sf")
-install.packages("terra")
-install.packages("foreign")
-install.packages("tmap")
-install.packages("leaflet")
-install.packages("RColorBrewer")
-install.packages("sp")
-install.packages("stargazer")
-install.packages("rmapshaper")
-install.packages("raster")
-install.packages("dismo")
-install.packages("leaflet")
-install.packages("gmapsdistance")
-install.packages("googleway")
-install.packages("adehabitatHR")
-install.packages("spdep", type = "binary")
-install.packages("spgwr")
-install.packages("spatialreg")
-install.packages("spatstat", type = "binary")
+
+library(tmap)
+library(spDataLarge)
 
 # load the tmap and spDataLarge packages
-library("tmap")
-library("spDataLarge")
-library("ggplot2")
-library("spatstat")
-library("spatialreg")
-library("spgwr")
-library("spdep")
-library("adehabitatHR")
-library("googleway")
-library("gmapsdistance")
-library("leaflet")
-library("dismo")
-library("raster")
-library("sp")
-library("leaflet")
-library("tmap")
-library("foreign")
-library("sf")
-library("terra")
-library("RColorBrewer")
-library("stargazer")
-library("rmapshaper")
+pacman::p_load(
+  ggplot2,
+  spatstat,
+  spatialreg,
+  spgwr,
+  spdep,
+  adehabitatHR,
+  googleway,
+  gmapsdistance,
+  leaflet,
+  dismo,
+  raster,
+  sp,
+  leaflet,
+  tmap,
+  foreign,
+  sf,
+  terra,
+  RColorBrewer,
+  stargazer,
+  rmapshaper
+)
 
 # load the dataset
 data("pol_pres15")
