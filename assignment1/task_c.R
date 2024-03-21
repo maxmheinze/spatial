@@ -53,5 +53,6 @@ ggplot() +
   geom_sf(data = merged_shp1, aes(fill = values)) +
   scale_fill_continuous(name = "Fertility Rate") +
   labs(title = "Fertility Rate by Region")
+  theme_minimal()
 
 #Visualization 2
