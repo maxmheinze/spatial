@@ -186,27 +186,47 @@ knitr::kable(closeness(graph_3), col.names = "closeness centrality")
 
 # Simulation --------------------------------------------------------------
 
-set.seed(555)
+set.seed(1234)
 
-# Simulate attributes
-coolness <- rnorm(10)
-names(coolness) <- node_names
-
-coolness_peers <- vector(length = 10L)
-names(coolness_peers) <- node_names
-
-for (i in 1:vcount(graph_1)) {
-  nbs <- neighbors(graph_1, i)
-  coolness_peers[i] <- mean(coolness[nbs])
-}
-
-responses <- beta * coolness + gamma * coolness_peers
+# Set parameters
+N <- length(node_names)
+beta <- -1
+lambda <- 0.65
+sigmasquared <- 1
 
 
-neb <- neighbors(graph_1, 3)
-mean(coolness[neb])
+reps <- 1000
+estims <- vector("numeric", reps) 
 
-# and now???
+for (i in 1:reps) {
+  
+  # Create the coolness vector
+  x <- rnorm(length(node_names))
+  names(x) <- node_names
+  
+  # Rename the adj. matrix W
+  W <- adj_matrix_2
+  
+  errs <- rnorm(N, 0, sigmasquared)
+  
+  Wx <- W %*% x
+  
+  # Calculate S = (I - \gamma W)
+  S = diag(N) - lambda * W
+  
+  # Solve for y (the crime variable)
+  y = solve(S, Wx * gamma + x * beta + errs)
+  
+  # Fit a linear model
+  model_1 <- lm(y ~ x)
+  
+  # Store fitted estimates
+  estims[i] <- coef(model_1)["x"]
+  
+  # Lazy progress indicator (if needed)
+  # print(paste("Repetition", i, "done"))
+} 
 
-
+avg_estimate <- mean(estims)
+print(avg_estimate)
 
