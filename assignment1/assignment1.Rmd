@@ -211,7 +211,7 @@ knitr::kable(closeness(graph_1), col.names = "closeness centrality")
 
 Surprise, surprise: Stephansplatz is the most central station and Schottentor is the least central station.
 
-## Centrality in a Row-Normalized Network
+### Centrality in a Row-Normalized Network
 
 Row-normalizing means that we divide every element in our adjacency matrix by the corresponding row sum. If we do this, we can see that our adjacency matrix is no longer symmetric:
 
@@ -267,7 +267,7 @@ For our measure of **closeness centrality**, we need a definition of “distance
 knitr::kable(closeness(graph_2), col.names = "closeness centrality")
 ```
 
-## Removing a node
+### Removing a node
 
 We remove Stubentor because it might be interesting to see what happens if we remove one of Stephansplatz's connections. Let's see:
 
@@ -347,3 +347,186 @@ knitr::kable(closeness(graph_3), col.names = "closeness centrality")
 ```
 
 We can see that Stephansplatz suffers and is now exactly as central as Schwedenplatz. Also, there is no longer a difference between Schottentor and Volkstheater as least central stations using any measure of centrality. This makes intuitive sense since the new graph is now symmetrically consisting of a central “circle” and two “appendices” of length two. 
+
+## Simulation
+
+We say that the coolness factor $\boldsymbol{x}$ is a characteristic of each station. Some stations are cooler and some are less cool. We also assume that coolness $x$ affects the crime rate $\boldsymbol{y}$ at a station. However, crime rates at stations are also influenced by neighboring stations' crime rates and coolness factors, in the style of a linear-in-means model:
+
+$$
+ \boldsymbol{y} = \boldsymbol{x}\beta + \boldsymbol{Wx}\gamma + \lambda\boldsymbol{Wy} + \boldsymbol{\varepsilon},
+$$
+
+where $\boldsymbol{\varepsilon} \sim \mathbf{N}(\boldsymbol{0}, \boldsymbol{I}\sigma^2)$. Letting $\boldsymbol{S} = (\boldsymbol{I}-\lambda\boldsymbol{W})$, this becomes
+
+$$
+ \boldsymbol{Sy} = \boldsymbol{x}\beta + \boldsymbol{Wx}\gamma + \boldsymbol{\varepsilon},
+$$
+
+which we can simulate as shown in the following. For the simulation, we let $\beta=-1$ (cooler stations have less crime), $\gamma = 1$, $\lambda = 0.65$, and $\sigma^2 = 1$. 
+
+```{r}
+set.seed(1234)
+
+# Set parameters
+N <- length(node_names)
+beta <- -1
+gamma <-  1
+lambda <- 0.65
+sigmasquared <- 1
+
+
+reps <- 1000
+estims <- vector("numeric", reps) 
+
+for (i in 1:reps) {
+  
+  # Create the coolness vector
+  x <- rnorm(length(node_names))
+  names(x) <- node_names
+  
+  # Rename the adj. matrix W
+  W <- adj_matrix_2
+  
+  errs <- rnorm(N, 0, sigmasquared)
+  
+  Wx <- W %*% x
+  
+  # Calculate S = (I - \lambda W)
+  S = diag(N) - lambda * W
+  
+  # Solve for y (the crime variable)
+  y = solve(S, Wx * gamma + x * beta + errs)
+  
+  # Fit a linear model
+  model_1 <- lm(y ~ x)
+  
+  # Store fitted estimates
+  estims[i] <- coef(model_1)["x"]
+} 
+```
+
+We then fit the following linear model 
+
+$$
+ \boldsymbol{y} = \boldsymbol{x}\beta + \boldsymbol{\varepsilon},
+$$
+
+and store the coefficients for $\beta$. 
+
+```{r}
+avg_estimate <- mean(estims)
+print(avg_estimate)
+```
+
+The average $\beta$ coefficient of 1,000 simulations was `r avg_estimate`, and we conclude the estimate is downward biased in magnitude, since the true value of $\beta$ was --1.
+
+# Task D
+
+## Install and load the tmap and spDataLarge packages (available from GitHub). Load and review the pol_pres15 dataset on the Polish Presidential election in 2015
+```{r}
+# install required packages
+install.packages("tmap", repos = "https://r-tmap.github.io/tmap/", type = "source")
+install.packages("spDataLarge", repos = "https://nowosad.github.io/drat/", type = "source")
+
+library(tmap)
+library(spDataLarge)
+
+# load the tmap and spDataLarge packages
+pacman::p_load(
+  ggplot2,
+  spatstat,
+  spatialreg,
+  spgwr,
+  spdep,
+  adehabitatHR,
+  googleway,
+  gmapsdistance,
+  leaflet,
+  dismo,
+  raster,
+  sp,
+  leaflet,
+  tmap,
+  foreign,
+  sf,
+  terra,
+  RColorBrewer,
+  stargazer,
+  rmapshaper
+)
+
+# load the dataset
+data("pol_pres15")
+
+summary(pol_pres15)
+
+```
+
+## One visualization should compare the support for Komorowski and Duda
+```{r}
+# setting color palette
+display.brewer.all()
+
+# first round vote share of komorowski and duda on choropleth
+tm_shape(pol_pres15) + 
+  tm_fill("I_Duda_share", palette = "RdYlGn", style = "equal", n = 2, breaks = c(0, 0.49, 1), 
+          labels = c("Komoroski", "Duda")) + 
+  tm_borders(alpha = 0.5, col = "white") + 
+  tm_compass() + 
+  tm_layout(title = "First Round Vote Share of Komorowski and Duda", 
+            legend.text.size = 1, legend.title.size = 0.01, 
+            legend.position = c("left", "bottom"), legend.title.color = "white", frame = FALSE)
+
+# runoff vote share of komorowski and duda on choropleth
+tm_shape(pol_pres15) + 
+  tm_fill("II_Duda_share", palette = "RdYlGn", style = "equal", n = 2, alpha = 1, breaks = c(0, 0.49, 1), 
+          labels = c("Komoroski", "Duda")) + 
+  tm_borders(alpha = 0.5, col = "white") + 
+  tm_dots("types", palette = "BrBG") +
+  tm_compass() + 
+  tm_layout(title = "Runoff Round Vote Share of Komorowski and Duda", 
+            legend.text.size = 1, legend.title.size = 0.01, 
+            legend.position = c("left", "bottom"), legend.title.color = "white", frame = FALSE)
+
+# percentage of vote share by each candidate
+tm_shape(pol_pres15) + 
+  tm_fill("II_Duda_share", palette = "RdYlGn", style = "equal", n = 10, breaks = c(0, 0.49, 1), 
+          labels = c("Komoroski (91-100)","Komoroski (90-81)", "Komoroski (80-71)","Komoroski (70-61)","Komoroski (60-51)", "Duda (51-60)","Duda (61-70)","Duda (71-80)","Duda (81-90)","Duda (91-100)")) + 
+  tm_borders(alpha = 0.5, col = "black") + 
+  tm_compass() + 
+  tm_layout(title = "Percentage of Vote Share by Each Candidate", 
+            legend.text.size = 0.55, legend.title.size = 0.01, 
+            legend.position = c("left", "bottom"), legend.title.color = "white", frame = FALSE)
+
+```
+
+
+## One visualization should investigate possible issues with postal voting envelopes
+```{r}
+# correlation of unused voting papers
+plot(II_unused_voting_papers ~ II_of_which_voting_papers_taken_from_voting_envelopes, 
+     data = pol_pres15, 
+     xlab = "Voting papers taken from voting envelopes", 
+     ylab = "Unused Voting Papers", 
+     col = "blue")
+
+plot(II_unused_voting_papers ~ II_voting_papers_taken_from_ballot_box, 
+     data = pol_pres15, 
+     xlab = "Voting papers taken from Ballot Box", 
+     ylab = "Unused Voting Papers", 
+     col = "red")
+
+# correlation of invalid votes
+plot(II_invalid_votes ~ II_of_which_voting_papers_taken_from_voting_envelopes, data = pol_pres15, 
+     ylab = "Number of Invalid Votes", 
+     xlab = "Voting papers taken from voting envelopes", 
+     col = "blue")
+
+plot(II_invalid_votes ~ II_voting_papers_taken_from_ballot_box, 
+     data = pol_pres15, 
+     ylab = "Number of Invalid Votes", 
+     xlab = "Voting papers taken from Ballot Box", 
+     col = "red")
+
+```
+

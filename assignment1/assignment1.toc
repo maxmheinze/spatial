@@ -5,5 +5,10 @@
 \contentsline {section}{Task B}{3}{section*.6}%
 \contentsline {subsection}{Creating a Graph and an Adjacency Matrix}{3}{section*.7}%
 \contentsline {subsection}{Centrality}{4}{section*.8}%
-\contentsline {subsection}{Centrality in a Row-Normalized Network}{6}{section*.9}%
-\contentsline {subsection}{Removing a node}{7}{section*.10}%
+\contentsline {subsubsection}{Centrality in a Row-Normalized Network}{6}{section*.9}%
+\contentsline {subsubsection}{Removing a node}{7}{section*.10}%
+\contentsline {subsection}{Simulation}{9}{section*.11}%
+\contentsline {section}{Task D}{11}{section*.12}%
+\contentsline {subsection}{Install and load the tmap and spDataLarge packages (available from GitHub). Load and review the pol\_pres15 dataset on the Polish Presidential election in 2015}{11}{section*.13}%
+\contentsline {subsection}{One visualization should compare the support for Komorowski and Duda}{14}{section*.14}%
+\contentsline {subsection}{One visualization should investigate possible issues with postal voting envelopes}{17}{section*.15}%

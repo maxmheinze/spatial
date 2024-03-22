@@ -192,6 +192,7 @@ set.seed(1234)
 N <- length(node_names)
 beta <- -1
 lambda <- 0.65
+gamma <-  1
 sigmasquared <- 1
 
 
@@ -211,7 +212,7 @@ for (i in 1:reps) {
   
   Wx <- W %*% x
   
-  # Calculate S = (I - \gamma W)
+  # Calculate S = (I - \lambda W)
   S = diag(N) - lambda * W
   
   # Solve for y (the crime variable)
