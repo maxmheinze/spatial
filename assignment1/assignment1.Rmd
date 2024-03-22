@@ -347,6 +347,3 @@ knitr::kable(closeness(graph_3), col.names = "closeness centrality")
 ```
 
 We can see that Stephansplatz suffers and is now exactly as central as Schwedenplatz. Also, there is no longer a difference between Schottentor and Volkstheater as least central stations using any measure of centrality. This makes intuitive sense since the new graph is now symmetrically consisting of a central “circle” and two “appendices” of length two. 
-
-
-
