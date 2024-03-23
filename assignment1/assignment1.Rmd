@@ -594,6 +594,11 @@ data("pol_pres15")
 ```
 
 # One visualization should compare the support for Komorowski and Duda
+
+The first choropleth basically represents the runoff results between Duda and Komorowski. As observed, Duda is dominant in southeast regions whereas Komorowski is dominant in northwest regions. The total vote share of Duda is 51.55 per cent whereas of that of Komorowski is 48.45 per cent.
+
+The second choropleth basically depicts the percentage of vote share in each of the constituences. As the shade of the colour gets lighter for red or green, the vote share for each candidate decreases or conversely for the opposing candidate increases.
+
 ```{r}
 # runoff results of komorowski and duda on choropleth
 tm_shape(pol_pres15) + 
