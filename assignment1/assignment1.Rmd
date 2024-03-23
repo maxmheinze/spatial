@@ -420,6 +420,120 @@ print(avg_estimate)
 
 The average $\beta$ coefficient of 1,000 simulations was `r avg_estimate`, and we conclude the estimate is downward biased in magnitude, since the true value of $\beta$ was --1.
 
+
+# Task C
+
+## Load the required packages to manipulate and visualize spatial data
+
+```{r}
+pacman::p_load(
+  dplyr,
+  ggplot2,
+  sf,
+  data.table,
+  readr,
+  eurostat,
+  RColorBrewer,
+  viridis
+)
+```
+
+## Download shapefile and data of interest.
+
+We download a shapefile for NUTS2 region and a dataset that includes fertility rates at the same regional level. 
+```{r}
+temp <- tempfile(fileext = ".zip")
+
+download.file("http://ec.europa.eu/eurostat/cache/GISCO/distribution/v2/nuts/download/ref-nuts-2021-03m.shp.zip", temp)
+
+outDir <- "./data"
+unzip(temp, exdir=outDir)
+unzip("./data/NUTS_RG_03M_2021_4326_LEVL_2.shp.zip", exdir=outDir)
+
+#Data of interest at NUTS 2 level (Regional fertility rate)
+EurostatTOC <- get_eurostat_toc()
+df1 <- get_eurostat("tgs00100", time_format = "raw")
+```
+
+
+## Reading the shapeline, finding out its CRS and applying a new one.
+Now we read the shapeline and find out which Coordinate Reference System (CRS) it uses.
+```{r}
+shp1 <- st_read(dsn = "./data", layer ="NUTS_RG_03M_2021_4326_LEVL_2") 
+
+#Find out CRS of the shapefile
+CRS <- st_crs(shp1)
+print(CRS)
+```
+
+We observe that the shapefile uses a projection WGS 84 (EPSG 4326).
+
+Now we apply a new CRS to the shapefile (EPSG 3752) and remove remote regions so that the projection looks less distorted
+```{r}
+#Change CRS to EPSG 3752
+shp1 <- st_transform(shp1, 
+                     st_crs(3752))
+#Remove overseas regions
+overseas <- c("FRY1", "FRY2", "FRY3", "FRY4", "FRY5", "FRZZ", 
+              "PT20", "PT30", "PTZZ", 
+              "ES70", "ESZZ", 
+              "NO0B", "NOZZ")
+shp1 <- shp1[! shp1$NUTS_ID %in% overseas, ]
+```
+
+## Merging the shapefile and creating two visualizations
+
+First, we merge the shapefile with the fertility rates dataset. To create the visualizations, we select the fertility rates observations of 2019.
+```{r}
+df1 <- df1[df1$TIME_PERIOD == 2019, ]
+
+df1 <- df1[!df1$geo %in% overseas,]
+
+merged_shp1 <- left_join(shp1, df1, by=c("NUTS_ID"="geo"))
+```
+
+Now we create the first visualization using a continuous scale.
+```{r}
+#Visualization 1 - Continious scale
+
+ggplot() +
+  geom_sf(data = merged_shp1, aes(fill = values)) +
+  scale_fill_continuous(name = "Fertility Rate") +
+  labs(title = "Fertility Rate by Region")
+  theme_minimal()
+```
+
+For the second visualization, we use a discrete scale with 5 levels. To do that, we cut the values of fertility rate into five segments.
+```{r}
+#Visualization 2 - Discrete scale
+  
+#We cut the values of fertility rate into 5 segments
+ merged_shp1$value_cat <- cut_to_classes(merged_shp1$values, n = 5)
+  
+  
+colors <- viridis(5)
+color_na <- ""
+ggplot() +
+geom_sf(data = merged_shp1, aes(fill = ifelse(is.na(value_cat), "No Data", as.character(value_cat)))) +  
+scale_fill_manual(name = "Fertility Rate", values = c(color_na, colors), 
+                      breaks = c("No Data", levels(factor(merged_shp1$value_cat)))) +  
+labs(title = "Fertility Rate by Region") +
+theme_minimal()
+```  
+
+## "Briefly explain what two conceptually different ways there are to store visualizations, and name two formats each. Which ones are more appropriate for which types of visualizations and why? Use the one you think is more appropriate to store your visualizations"
+
+The two main ways to store visualizations are raster graphics and vector graphics. Raster graphics store images as a grid of pixels, where each pixel contains color information. This format is more appropriate for images that contain a high level of detail, with a wide variety of colors and precise shading. On the other hand, vector graphics store images using mathematical equations to define shapes and lines. This storage method is more appropriate for images with less variety of colors and less detail in shading. Since vector files do not use pixels, the images can be scaled without losing sharpness in the details of the shapes.
+
+Accordingly, to store the visualization that uses a continuous scale, it might be more convenient to use raster graphics, since they allow to better display the smooth color gradients. Conversely, to store the discrete-scale visualization, using vector graphics might be a better option since the image contains only solid colors with no smooth gradients. In this way, we could zoom in, rotate the map, or manipulate it in any way without losing any image quality. 
+
+We save the first visualization (continuous scale) in a PNG format, which is a raster format. The second visualization (discrete scale) is saved in a PDF format, which uses vector graphics.
+```{r}
+ggsave("visualization_1.png", plot = p, device = "png")
+ggsave("visualization_2.pdf", plot = p, device = "pdf")
+```
+
+
 # Task D
 
 ## Install and load the tmap and spDataLarge packages (available from GitHub). Load and review the pol_pres15 dataset on the Polish Presidential election in 2015

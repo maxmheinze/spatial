@@ -22,7 +22,7 @@ unzip("./data/NUTS_RG_03M_2021_4326_LEVL_2.shp.zip", exdir=outDir)
 #Data of interest at NUTS 2 level (Regional fertility rate)
 EurostatTOC <- get_eurostat_toc()
 df1 <- get_eurostat("tgs00100", time_format = "raw")
-head(df1)
+
 
 
 #------Read the shapefile and map the data to a new CRS-----------------
@@ -68,7 +68,7 @@ ggplot() +
   
   
 colors <- viridis(5)
-color_na <- "red"
+color_na <- ""
 ggplot() +
 geom_sf(data = merged_shp1, aes(fill = ifelse(is.na(value_cat), "No Data", as.character(value_cat)))) +  
 scale_fill_manual(name = "Fertility Rate", values = c(color_na, colors), 
