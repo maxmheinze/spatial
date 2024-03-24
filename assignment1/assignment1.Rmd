@@ -529,8 +529,8 @@ Accordingly, to store the visualization that uses a continuous scale, it might b
 
 We save the first visualization (continuous scale) in a PNG format, which is a raster format. The second visualization (discrete scale) is saved in a PDF format, which uses vector graphics.
 ```{r}
-ggsave("visualization_1.png", plot = p, device = "png")
-ggsave("visualization_2.pdf", plot = p, device = "pdf")
+#ggsave("visualization_1.png", plot = p, device = "png")
+#ggsave("visualization_2.pdf", plot = p, device = "pdf")
 ```
 
 
