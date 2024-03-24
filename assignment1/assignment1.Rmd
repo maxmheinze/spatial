@@ -350,7 +350,7 @@ We can see that Stephansplatz suffers and is now exactly as central as Schwedenp
 
 ## Simulation
 
-We say that the coolness factor $\boldsymbol{x}$ is a characteristic of each station. Some stations are cooler and some are less cool. We also assume that coolness $x$ affects the crime rate $\boldsymbol{y}$ at a station. However, crime rates at stations are also influenced by neighboring stations' crime rates and coolness factors, in the style of a linear-in-means model:
+We say that the coolness factor $\boldsymbol{x}$ is a characteristic of each station. Some stations are cooler and some are less cool. We also assume that coolness $\boldsymbol{x}$ affects the crime rate $\boldsymbol{y}$ at a station. However, crime rates at stations are also influenced by neighboring stations' crime rates and coolness factors, in the style of a linear-in-means model:
 
 $$
  \boldsymbol{y} = \boldsymbol{x}\beta + \boldsymbol{Wx}\gamma + \lambda\boldsymbol{Wy} + \boldsymbol{\varepsilon},
