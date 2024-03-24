@@ -597,7 +597,7 @@ data("pol_pres15")
 
 The first choropleth basically represents the runoff results between Duda and Komorowski. As observed, Duda is dominant in southeast regions whereas Komorowski is dominant in northwest regions. The total vote share of Duda is 51.55 per cent whereas of that of Komorowski is 48.45 per cent.
 
-The second choropleth basically depicts the percentage of vote share in each of the constituences. As the shade of the colour gets lighter for red or green, the vote share for each candidate decreases or conversely for the opposing candidate increases.
+The second choropleth basically depicts the percentage of vote share in each of the constituences. As the shade of the colour  gets lighter for red or green, the vote share for each candidate decreases or conversely for the opposite candidate increases. The colour shades for each candidate is divided into five intervals indicating a consitutency won by a candidate is possible only when it has votes more than 50 per cent or above.
 
 ```{r}
 # runoff results of komorowski and duda on choropleth
@@ -621,6 +621,12 @@ tm_shape(pol_pres15) +
             legend.position = c("left", "bottom"), legend.title.color = "white", frame = FALSE)
 
 ```
+
+The first scatterplot below depicts a strong a correlation of unused voting papers and voting envelopes. This indicates a major problem of the wastage being caused by using voting envelopes which should be reduced significantly.
+
+The second scatterplot below depicts the correlation with the number of invalid votes. Again we see a very strong correlation of it with envelopes indicating more votes getting invalid which could be attributed to biasness, not following the proper procedure etc.
+
+The third scatterplot depicts the correlation between the winning candidate "Duda" and the envelopes. A mojor reason of Duda winning the elections could also be attributed to the votes it had from envelopes.
 
 # One visualization should investigate possible issues with postal voting envelopes
 ```{r}
