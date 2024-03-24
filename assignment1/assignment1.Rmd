@@ -90,7 +90,7 @@ boston_quick_ols <- function(dependent, ...) {
 
 Next, we apply the function, using a collection of four independent variables.
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 boston_quick_ols("medv", "rm", "age", "dis", "nox")
 ```
 
@@ -167,7 +167,7 @@ knitr::kable(adj_matrix)
 
 Our graph is undirected, and thus the simplest notion of centrality that we can investigate is the nodes' **degree**. We can compute the degree by simply calculating the row sums of the adjacency matrix. The result, given in the table below, is that Stephansplatz is the most central station, having 4 links, and Volkstheater and Schottentor are the least central stations, having one link each.
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 knitr::kable(rowSums(adj_matrix), col.names = c("degree centrality"))
 ```
 
@@ -184,7 +184,7 @@ $$
 
 which means that $\boldsymbol{c}$ is an eigenvector of $\boldsymbol{A}$ corresponding to eigenvalue $\lambda$. It follows from the Perron–Frobenius Theorem that there is exactly one (except multiples of itself) eigenvector with all non-negative entries (which is what we desire for the centrality measure) and that it corresponds to the largest of the eigenvalues. Conveniently, the `igraph` package has a function that does the calculations for us. We get the following centrality measures:
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 eigen_centrality(
   graph_1,
   directed = FALSE,
@@ -205,7 +205,7 @@ c_i^{\text{closeness}} = \frac{N-1}{\sum_{j\in N,j\neq i}d(i,j)},
 $$
 where $d(\cdot)$ refers to the length of the shortest average path. Again, we are happy to use the implementation the `igraph` package provides to calculate closeness centrality of our stations.
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 knitr::kable(closeness(graph_1), col.names = "closeness centrality")
 ```
 
@@ -215,7 +215,7 @@ Surprise, surprise: Stephansplatz is the most central station and Schottentor is
 
 Row-normalizing means that we divide every element in our adjacency matrix by the corresponding row sum. If we do this, we can see that our adjacency matrix is no longer symmetric:
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 adj_matrix_2 <- adj_matrix / rowSums(adj_matrix)
 
 knitr::kable(round(adj_matrix_2,2))
@@ -225,7 +225,7 @@ This means that we can no longer treat our network as an undirected graph, since
 
 Regarding **degree centrality**, we therefore have to split up our measure into **in-degree** and **out-degree** centrality. Since we normalized row sums, i.e., the sum of outward connections of a node, the out-degree is a somewhat useless measure, since calculating it will always return unity by definition. Calculating the in-degree, however, yields a result:
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 knitr::kable(colSums(adj_matrix_2), col.names = c("in-degree centrality"))
 ```
 
@@ -242,7 +242,7 @@ $$
 $a_{i,j}$ can now assume values between 0 and 1 instead of _just_ 0 and 1. Every value that was 0 before is still 0, but all connections that do exist are now weighted by how many other outgoing connections from a station there are. This makes for a slightly different eigenvector: 
 
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 adj_matrix_2 <- adj_matrix / rowSums(adj_matrix)
 
 graph_2 <- graph_from_adjacency_matrix(adj_matrix_2, mode = "directed", weighted = TRUE)
@@ -262,7 +262,7 @@ eigen_centrality(
 
 For our measure of **closeness centrality**, we need a definition of “distance” in a weighted graph. Conventionally, weights are in this case interpreted as the “length” of a node, meaning that a low-weighted connection is related to the notion of two nodes being “closer,” and that the distance equals the sum of weights along a path. Since weights *from* a station that has many outgoing connections will be lower (even if incoming connections' weights need not be), having many outgoing connections is rewarded using this measure of centrality with a row-normalized adjacency matrix. We can also see that Stephansplatz gains relatively more compared to the original closeness measure:
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 
 knitr::kable(closeness(graph_2), col.names = "closeness centrality")
 ```
@@ -364,7 +364,7 @@ $$
 
 which we can simulate as shown in the following. For the simulation, we let $\beta=-1$ (cooler stations have less crime), $\gamma = 1$, $\lambda = 0.65$, and $\sigma^2 = 1$. 
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 set.seed(1234)
 
 # Set parameters
@@ -413,7 +413,7 @@ $$
 
 and store the coefficients for $\beta$. 
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 avg_estimate <- mean(estims)
 print(avg_estimate)
 ```
@@ -423,9 +423,11 @@ The average $\beta$ coefficient of 1,000 simulations was `r avg_estimate`, and w
 
 # Task C
 
-## Load the required packages to manipulate and visualize spatial data
+## Preliminaries
 
-```{r}
+We load the relevant packages for manipulating spatial data.
+
+```{r, out.width = "50%", fig.align = "center"}
 pacman::p_load(
   dplyr,
   ggplot2,
@@ -438,10 +440,9 @@ pacman::p_load(
 )
 ```
 
-## Download shapefile and data of interest.
 
 We download a shapefile for NUTS2 region and a dataset that includes fertility rates at the same regional level. 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 temp <- tempfile(fileext = ".zip")
 
 download.file("http://ec.europa.eu/eurostat/cache/GISCO/distribution/v2/nuts/download/ref-nuts-2021-03m.shp.zip", temp)
@@ -456,9 +457,9 @@ df1 <- get_eurostat("tgs00100", time_format = "raw")
 ```
 
 
-## Reading the shapeline, finding out its CRS and applying a new one.
-Now we read the shapeline and find out which Coordinate Reference System (CRS) it uses.
-```{r}
+## Shapefile CRS
+Now we read the shapefile and find out which Coordinate Reference System (CRS) it uses.
+```{r, out.width = "50%", fig.align = "center"}
 shp1 <- st_read(dsn = "./data", layer ="NUTS_RG_03M_2021_4326_LEVL_2") 
 
 #Find out CRS of the shapefile
@@ -468,8 +469,8 @@ print(CRS)
 
 We observe that the shapefile uses a projection WGS 84 (EPSG 4326).
 
-Now we apply a new CRS to the shapefile (EPSG 3752) and remove remote regions so that the projection looks less distorted
-```{r}
+Now we apply a new CRS to the shapefile (EPSG 3752) and remove remote regions so that the projection looks less distorted.
+```{r, out.width = "50%", fig.align = "center"}
 #Change CRS to EPSG 3752
 shp1 <- st_transform(shp1, 
                      st_crs(3752))
@@ -481,10 +482,10 @@ overseas <- c("FRY1", "FRY2", "FRY3", "FRY4", "FRY5", "FRZZ",
 shp1 <- shp1[! shp1$NUTS_ID %in% overseas, ]
 ```
 
-## Merging the shapefile and creating two visualizations
+## Merging the Shapefile and Creating Two Visualizations
 
 First, we merge the shapefile with the fertility rates dataset. To create the visualizations, we select the fertility rates observations of 2019.
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 df1 <- df1[df1$TIME_PERIOD == 2019, ]
 
 df1 <- df1[!df1$geo %in% overseas,]
@@ -493,18 +494,18 @@ merged_shp1 <- left_join(shp1, df1, by=c("NUTS_ID"="geo"))
 ```
 
 Now we create the first visualization using a continuous scale.
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 #Visualization 1 - Continious scale
 
 ggplot() +
   geom_sf(data = merged_shp1, aes(fill = values)) +
   scale_fill_continuous(name = "Fertility Rate") +
-  labs(title = "Fertility Rate by Region")
+  labs(title = "Fertility Rate by Region") +
   theme_minimal()
 ```
 
 For the second visualization, we use a discrete scale with 5 levels. To do that, we cut the values of fertility rate into five segments.
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 #Visualization 2 - Discrete scale
   
 #We cut the values of fertility rate into 5 segments
@@ -521,14 +522,15 @@ labs(title = "Fertility Rate by Region") +
 theme_minimal()
 ```  
 
-## "Briefly explain what two conceptually different ways there are to store visualizations, and name two formats each. Which ones are more appropriate for which types of visualizations and why? Use the one you think is more appropriate to store your visualizations"
+## Different Ways to Store Visualizations
 
 The two main ways to store visualizations are raster graphics and vector graphics. Raster graphics store images as a grid of pixels, where each pixel contains color information. This format is more appropriate for images that contain a high level of detail, with a wide variety of colors and precise shading. On the other hand, vector graphics store images using mathematical equations to define shapes and lines. This storage method is more appropriate for images with less variety of colors and less detail in shading. Since vector files do not use pixels, the images can be scaled without losing sharpness in the details of the shapes.
 
 Accordingly, to store the visualization that uses a continuous scale, it might be more convenient to use raster graphics, since they allow to better display the smooth color gradients. Conversely, to store the discrete-scale visualization, using vector graphics might be a better option since the image contains only solid colors with no smooth gradients. In this way, we could zoom in, rotate the map, or manipulate it in any way without losing any image quality. 
 
-We save the first visualization (continuous scale) in a PNG format, which is a raster format. The second visualization (discrete scale) is saved in a PDF format, which uses vector graphics.
-```{r}
+We save the first visualization (continuous scale) in a PNG format, which is a raster format. JPEG would be another option. The second visualization (discrete scale) is saved in a PDF format, which uses vector graphics. SVG would be another option here.
+
+```{r, out.width = "50%", fig.align = "center"}
 #ggsave("visualization_1.png", plot = p, device = "png")
 #ggsave("visualization_2.pdf", plot = p, device = "pdf")
 ```
@@ -536,70 +538,52 @@ We save the first visualization (continuous scale) in a PNG format, which is a r
 
 # Task D
 
-# Install and load the tmap and spDataLarge packages (available from GitHub). Load and review the pol_pres15 dataset on the Polish Presidential election in 2015
-```{r}
-# install required packages
-install.packages("tmap", repos = "https://r-tmap.github.io/tmap/", type = "source")
-install.packages("spDataLarge", repos = "https://nowosad.github.io/drat/", type = "source")
-install.packages("ggplot2")
-install.packages("sf")
-install.packages("terra")
-install.packages("foreign")
-install.packages("tmap")
-install.packages("leaflet")
-install.packages("RColorBrewer")
-install.packages("sp")
-install.packages("stargazer")
-install.packages("rmapshaper")
-install.packages("raster")
-install.packages("dismo")
-install.packages("leaflet")
-install.packages("gmapsdistance")
-install.packages("googleway")
-install.packages("adehabitatHR")
-install.packages("spdep", type = "binary")
-install.packages("spgwr")
-install.packages("spatialreg")
-install.packages("spatstat", type = "binary")
-install.packages("hrbrthemes")
+## Preliminaries 
 
-# load the tmap and spDataLarge packages
-library("tmap")
-library("spDataLarge")
-library("ggplot2")
-library("spatstat")
-library("spatialreg")
-library("spgwr")
-library("spdep")
-library("adehabitatHR")
-library("googleway")
-library("gmapsdistance")
-library("leaflet")
-library("dismo")
-library("raster")
-library("sp")
-library("leaflet")
-library("tmap")
-library("foreign")
-library("sf")
-library("terra")
-library("RColorBrewer")
-library("stargazer")
-library("rmapshaper")
-library("hrbrthemes")
+```{r, out.width = "50%", fig.align = "center"}
+# install required packages
+#install.packages("tmap", repos = "https://r-tmap.github.io/tmap/", type = "source")
+#install.packages("spDataLarge", repos = "https://nowosad.github.io/drat/", type = "source")
+
+
+# load the tmap and pDataLarge packages
+pacman::p_load(
+"tmap",
+"spDataLarge",
+"ggplot2",
+"spatstat",
+"spatialreg",
+"spgwr",
+"spdep",
+"adehabitatHR",
+"googleway",
+"gmapsdistance",
+"leaflet",
+"dismo",
+"raster",
+"sp",
+"leaflet",
+"tmap",
+"foreign",
+"sf",
+"terra",
+"RColorBrewer",
+"stargazer",
+"rmapshaper",
+"hrbrthemes"
+)
 
 # load the dataset
 data("pol_pres15")
 
 ```
 
-# One visualization should compare the support for Komorowski and Duda
+## Support for Komorowski and Duda
 
 The first choropleth basically represents the runoff results between Duda and Komorowski. As observed, Duda is dominant in southeast regions whereas Komorowski is dominant in northwest regions. The total vote share of Duda is 51.55 per cent whereas of that of Komorowski is 48.45 per cent.
 
-The second choropleth basically depicts the percentage of vote share in each of the constituences. As the shade of the colour  gets lighter for red or green, the vote share for each candidate decreases or conversely for the opposite candidate increases. The colour shades for each candidate is divided into five intervals indicating a consitutency won by a candidate is possible only when it has votes more than 50 per cent or above.
 
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 # runoff results of komorowski and duda on choropleth
 tm_shape(pol_pres15) + 
   tm_fill("II_Duda_share", palette = "RdYlGn", style = "equal", n = 2, alpha = 1, breaks = c(0, 0.49, 1), 
@@ -609,7 +593,11 @@ tm_shape(pol_pres15) +
   tm_layout(title = "Runoff Round Results: Komorowski and Duda", 
             legend.text.size = 1, legend.title.size = 0.01, 
             legend.position = c("left", "bottom"), legend.title.color = "white", frame = FALSE)
+```
 
+The second choropleth basically depicts the percentage of vote share in each of the constituences. As the shade of the colour  gets lighter for red or green, the vote share for each candidate decreases or conversely for the opposite candidate increases. The colour shades for each candidate is divided into five intervals indicating a consitutency won by a candidate is possible only when it has votes more than 50 per cent or above.
+
+```{r, out.width = "50%", fig.align = "center"}
 # percentage of vote share by each candidate
 tm_shape(pol_pres15) + 
   tm_fill("II_Duda_share", palette = "RdYlGn", style = "equal", n = 10, breaks = c(0, 0.49, 1), 
@@ -622,27 +610,32 @@ tm_shape(pol_pres15) +
 
 ```
 
-The first scatterplot below depicts a strong a correlation of unused voting papers and voting envelopes. This indicates a major problem of the wastage being caused by using voting envelopes which should be reduced significantly.
+## Possible Issues With Postal Voting Envelopes
 
-The second scatterplot below depicts the correlation with the number of invalid votes. Again we see a very strong correlation of it with envelopes indicating more votes getting invalid which could be attributed to biasness, not following the proper procedure etc.
+The first scatter plot below depicts a strong a correlation of unused voting papers and voting envelopes. This indicates a major problem of the wastage being caused by using voting envelopes which should be reduced significantly.
 
-The third scatterplot depicts the correlation between the winning candidate "Duda" and the envelopes. A mojor reason of Duda winning the elections could also be attributed to the votes it had from envelopes.
-
-# One visualization should investigate possible issues with postal voting envelopes
-```{r}
+```{r, out.width = "50%", fig.align = "center"}
 # correlation with unused voting papers
 plot(II_unused_voting_papers ~ II_of_which_voting_papers_taken_from_voting_envelopes, 
      data = pol_pres15, 
      xlab = "Voting papers taken from voting envelopes", 
      ylab = "Unused Voting Papers", 
      col = "purple")
+```
 
+The second scatter plot below depicts the correlation with the number of invalid votes. Again we see a very strong correlation of it with envelopes indicating more votes getting invalid which could be attributed to bias, not following the proper procedure etc.
+
+```{r, out.width = "50%", fig.align = "center"}
 # correlation with invalid votes
 plot(II_invalid_votes ~ II_of_which_voting_papers_taken_from_voting_envelopes, data = pol_pres15, 
      ylab = "Number of Invalid Votes", 
      xlab = "Voting papers taken from voting envelopes", 
      col = "blue")
+```
 
+The third scatter plot depicts the correlation between the winning candidate Duda and the envelopes. A major reason of Duda winning the elections could also be attributed to the votes he had from envelopes.
+
+```{r, out.width = "50%", fig.align = "center"}
 # correlation with the winning candidate
 plot(II_Andrzej.Sebastian.Duda ~ II_of_which_voting_papers_taken_from_voting_envelopes, 
      data = pol_pres15, 
