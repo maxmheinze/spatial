@@ -1,0 +1,40 @@
+---
+title: '**Spatial Economics -- Assignment 2**'
+author: 
+  - "Max Heinze (h11742049@s.wu.ac.at)"
+  - "Jaime Miravet (h12235992@s.wu.ac.at)"
+  - "Jan Trimmel (h11809096@s.wu.ac.at)"
+date: "April 12, 2024"
+output: 
+  pdf_document:
+    toc: true
+    includes:
+      in_header: !expr file.path(rprojroot::find_rstudio_root_file(), "helper", "wrap_code.tex")
+header-includes: 
+  - \usepackage{tcolorbox}
+  - \usepackage[default]{lato}
+papersize: a4
+geometry: margin = 2cm
+urlcolor: DarkOrchid!65!black
+---
+
+```{r, setup, include = FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 80), tidy = TRUE)
+```
+
+\vspace{2em}
+
+\begin{tcolorbox}
+\centering \itshape The executable code that was used in compiling the assignment is available on GitHub at \url{https://github.com/maxmheinze/spatial}.
+\end{tcolorbox}
+
+\newpage
+
+# Task A
+
+# Task B
+
+# Task C
+
+# Task D
