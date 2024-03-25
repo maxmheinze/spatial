@@ -38,3 +38,5 @@ knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 80), tidy = TRUE)
 # Task C
 
 # Task D
+
+The image is a screenshot, and those are conventionally stored in PNG format. The photo _contained_ in the screenshot is a photograph, and it is difficult to guess which format it was originally saved in. Let's say it's JPEG. Then, someone inserted the image into the assignment PDF, meaning it is technically not stored as a PNG anymore. What all those ways of storing the image have in common is that they are **raster formats**, as they consist of individual pixels. And even if we print the document containing the image, it gets printed as dots, which are not exactly pixels, but cetrainly form a raster rather than a vector.
