@@ -36,6 +36,8 @@ knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 80), tidy = TRUE)
 # Task B
 
 # Task C
+## The perils of ignoring peer effects
+
 
 # Task D
 
