@@ -612,36 +612,19 @@ tm_shape(pol_pres15) +
 
 ## Possible Issues With Postal Voting Envelopes
 
-The first scatter plot below depicts a strong a correlation of unused voting papers and voting envelopes. This indicates a major problem of the wastage being caused by using voting envelopes which should be reduced significantly.
+The graph below depicts a high degree of correlation of Postal Voting Envelopes (PVE) and the high concentration wins for Komorowski (especially in the Warsaw region). This is evident from the clustering of the blue dots and whose size also directly correlated with the number of PVE used in those region.
 
-```{r, out.width = "50%", fig.align = "center"}
-# correlation with unused voting papers
-plot(II_unused_voting_papers ~ II_of_which_voting_papers_taken_from_voting_envelopes, 
-     data = pol_pres15, 
-     xlab = "Voting papers taken from voting envelopes", 
-     ylab = "Unused Voting Papers", 
-     col = "purple")
+```{r}
+
+tm_shape(pol_pres15) + 
+  tm_fill("II_Duda_share", palette = "RdYlGn", style = "equal", n = 10, breaks = c(0, 0.49, 1), 
+          labels = c("Komorowski (90-100]","Komorowski (80-90]", "Komorowski (70-80]","Komorowski (60-70]","Komorowski (50-60]", "Duda (50-60]","Duda (60-70]","Duda (70-80]","Duda (80-90]","Duda (90-100]")) + 
+  tm_borders(alpha = 0.5, col = "black") + 
+  tm_dots("II_of_which_voting_papers_taken_from_voting_envelopes", 
+          col = "blue", 
+          shape = 19) +
+  tm_compass() + 
+  tm_layout(title = "Correlation of PVE and High Concentrated Wins for Komorowski",
+            legend.text.size = 0.40, legend.title.size = 0.01, 
+            legend.position = c("left", "bottom"), legend.title.color = "white", frame = FALSE)
 ```
-
-The second scatter plot below depicts the correlation with the number of invalid votes. Again we see a very strong correlation of it with envelopes indicating more votes getting invalid which could be attributed to bias, not following the proper procedure etc.
-
-```{r, out.width = "50%", fig.align = "center"}
-# correlation with invalid votes
-plot(II_invalid_votes ~ II_of_which_voting_papers_taken_from_voting_envelopes, data = pol_pres15, 
-     ylab = "Number of Invalid Votes", 
-     xlab = "Voting papers taken from voting envelopes", 
-     col = "blue")
-```
-
-The third scatter plot depicts the correlation between the winning candidate Duda and the envelopes. A major reason of Duda winning the elections could also be attributed to the votes he had from envelopes.
-
-```{r, out.width = "50%", fig.align = "center"}
-# correlation with the winning candidate
-plot(II_Andrzej.Sebastian.Duda ~ II_of_which_voting_papers_taken_from_voting_envelopes, 
-     data = pol_pres15, 
-     xlab = "Voting papers taken from voting envelopes", 
-     ylab = "Votes for Duda in Runoff Elections", 
-     col = "darkgreen")
-
-```
-
