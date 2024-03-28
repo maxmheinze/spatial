@@ -612,7 +612,7 @@ tm_shape(pol_pres15) +
 
 ## Possible Issues With Postal Voting Envelopes
 
-The graph below depicts a high degree of correlation of Postal Voting Envelopes (PVE) and the high concentration wins for Komorowski (especially in the Warsaw region). This is evident from the clustering of the blue dots and whose size also directly correlated with the number of PVE used in those region.
+This first graph overlays dots scaled to the number of postal votes over the previous map of relative results. Expectedly, urban areas have the highest absolute amount of postal votes, and as we can see, they also tend to lean Komorowski.
 
 ```{r}
 
@@ -624,7 +624,44 @@ tm_shape(pol_pres15) +
           col = "blue", 
           shape = 19) +
   tm_compass() + 
-  tm_layout(title = "Correlation of PVE and High Concentrated Wins for Komorowski",
+  tm_layout(title = "Voting Share and Absolute Number of Postal Ballots",
             legend.text.size = 0.40, legend.title.size = 0.01, 
             legend.position = c("left", "bottom"), legend.title.color = "white", frame = FALSE)
 ```
+
+If we look at potential issues regarding postal votes, we can, for example, consider two different "success rates." These are depicted in the following two graphs.
+
+```{r, out.width = "60%", fig.align = "center"}
+pol_pres15_enh <- pol_pres15 %>%
+  mutate(II_percentage_postal_voting_successful = II_voting_envelopes_placed_in_ballot_box / II_postal_voting_envelopes_received,
+         II_percentage_postal_packages_returned = II_postal_voting_envelopes_received / II_voters_sent_postal_voting_package)
+  
+pol_pres15_enh$II_percentage_postal_voting_successful[is.nan(pol_pres15_enh$II_percentage_postal_voting_successful)] <- NA
+pol_pres15_enh$II_percentage_postal_packages_returned[is.nan(pol_pres15_enh$II_percentage_postal_packages_returned)] <- NA
+
+pol_pres15_enh$II_percentage_postal_voting_successful[is.infinite(pol_pres15_enh$II_percentage_postal_voting_successful)] <- NA
+pol_pres15_enh$II_percentage_postal_packages_returned[is.infinite(pol_pres15_enh$II_percentage_postal_packages_returned)] <- NA
+  
+tm_shape(pol_pres15_enh) + 
+  tm_fill("II_percentage_postal_voting_successful", palette = "-Reds", style = "equal", n = 10) + 
+  tm_borders(alpha = 0.5, col = "black") + 
+  tm_compass() + 
+  tm_layout(title = "Percentage of Returned Postal Votes that Were Used Correctly",
+            legend.text.size = 0.40, legend.title.size = 0.01, 
+            legend.position = c("left", "bottom"), legend.title.color = "white", frame = FALSE)
+```
+
+The first of those two is the percentage of postal votes that were received at the polling stations that were **correctly used and thus could be inserted into the ballot box**. We can see that some municipalities are red, meaning that a high amount of sent back ballot papers could not be counted due to certain irregularities, such as missing signature. We do not observe a clear spatial pattern, except for the fact that "severe" cases seem to predominantly occur in Eastern Poland. Still, we conclude that these issues are on the municipality level and should be investigated by the municipalities marked in red.
+
+```{r, out.width = "60%", fig.align = "center"}
+tm_shape(pol_pres15_enh) + 
+  tm_fill("II_percentage_postal_packages_returned", palette = "-Purples", style = "equal", n = 10) + 
+  tm_borders(alpha = 0.5, col = "black") + 
+  tm_compass() + 
+  tm_layout(title = "Percentage of Postal Votes that Were Returned Successfully",
+            legend.text.size = 0.40, legend.title.size = 0.01, 
+            legend.position = c("left", "bottom"), legend.title.color = "white", frame = FALSE)
+  
+```
+
+The second measure we consider is the percentage of voting packages that were **sent back by the voters**. A low number means that large percentages of voting packages were sent out, but not received back by the polling station. Again, we observe no spatial pattern, this time, not even an East-West imbalance. Note however that, if those purple outliers are very small municipalities, it could be that low (or even zero) figures could be caused by single individual people requesting and not sending in voting papers. 
