@@ -21,6 +21,10 @@ urlcolor: DarkOrchid!65!black
 ```{r, setup, include = FALSE}
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 80), tidy = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(showtext)
+font_add_google("Lato", "Lato")
+showtext_auto()
 ```
 
 \vspace{2em}
@@ -43,7 +47,7 @@ Text
 
 We create four maps:
 
-```{r, out.width = "60%", fig.align = "center"}
+```{r, out.width = "60%", fig.align = "center", echo = FALSE}
 
 # Header ------------------------------------------------------------------
 
@@ -53,8 +57,7 @@ pacman::p_load(
   haven,
   foreign,
   magrittr,
-  sf,
-  extrafont
+  sf
 )
 
 
