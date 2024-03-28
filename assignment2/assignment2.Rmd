@@ -12,6 +12,7 @@ output:
       in_header: !expr file.path(rprojroot::find_rstudio_root_file(), "helper", "wrap_code.tex")
 header-includes: 
   - \usepackage{tcolorbox}
+  - \usepackage{graphicx}
   - \usepackage[default]{lato}
 papersize: a4
 geometry: margin = 2cm
@@ -57,7 +58,9 @@ pacman::p_load(
   haven,
   foreign,
   magrittr,
-  sf
+  sf,
+  stargazer,
+  conleyreg
 )
 
 
@@ -152,6 +155,95 @@ tm_shape(spli) +
             fontfamily = "Lato")
 ```
 
+## Replication of Table 2
+
+```{r}
+
+# Replicate Results -------------------------------------------------------
+
+col1 <- lm(illiteracy ~ distmiss + lati + longi + corr + ita + mis + mis1, data = litr)
+col2 <- lm(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litr)
+
+litr_bra <- subset(litr, country == "BRA")
+col3 <- lm(illiteracy ~ distmiss + lati + longi + as.factor(mesorregi), data = litr_bra)
+col4 <- lm(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + as.factor(mesorregi), data = litr_bra)
+
+litr_arg <- subset(litr, country == "Argentina")
+col5 <- lm(illiteracy ~ distmiss + lati + longi + corr, data = litr_arg)
+col6 <- lm(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr, data = litr_arg)
+
+litr_pry <- subset(litr, country == "Paraguay")
+col7 <- lm(illiteracy ~ distmiss + ita, data = litr_pry)
+col8 <- lm(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + river + coast + ita, data = litr_pry)
+```
+
+```{r, echo = FALSE, results='asis'}
+
+cat("\\scalebox{.9}{")
+
+stargazer(col1, col2, col3, col4, type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE)
+
+cat("}")
+```
+
+```{r, echo = FALSE, results='asis'}
+
+cat("\\scalebox{.9}{")
+
+stargazer(col5, col6, col7, col8, column.labels = c("(5)", "(6)", "(7)", "(8)"), model.numbers = FALSE, type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE)
+
+cat("}")
+```
+
+
+```{r}
+lit1 <- litr %>%
+  drop_na(lati, longi) %>%
+  mutate(lat = lati,
+         lon = longi)
+
+col1c <- conleyreg(illiteracy ~ distmiss + lati + longi + corr + ita + mis + mis1, data = lit1,
+           dist_cutoff = 11.112, lat = "lat", lon = "lon")
+col2c <- conleyreg(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = lit1,
+           dist_cutoff = 11.112, lat = "lat", lon = "lon")
+
+lit1_bra <- subset(lit1, country == "BRA")
+col3c <- conleyreg(illiteracy ~ distmiss + lati + longi + as.factor(mesorregi), data = lit1_bra,
+           dist_cutoff = 11.112, lat = "lat", lon = "lon")
+col4c <- conleyreg(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + as.factor(mesorregi), data = lit1_bra,
+           dist_cutoff = 11.112, lat = "lat", lon = "lon")
+
+lit1_arg <- subset(lit1, country == "Argentina")
+col5c <- conleyreg(illiteracy ~ distmiss + lati + longi + corr, data = lit1_arg,
+           dist_cutoff = 11.112, lat = "lat", lon = "lon")
+col6c <- conleyreg(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr, data = lit1_arg,
+           dist_cutoff = 11.112, lat = "lat", lon = "lon")
+
+lit1_pry <- subset(lit1, country == "Paraguay")
+col7c <- conleyreg(illiteracy ~ distmiss + ita, data =  lit1_pry,
+                   dist_cutoff = 11.112, lat = "lat", lon = "lon")
+col8c <- conleyreg(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + river + coast + ita, data =  lit1_pry,
+                   dist_cutoff = 11.112, lat = "lat", lon = "lon")
+```
+
+```{r, echo = FALSE, results='asis'}
+
+cat("\\scalebox{.9}{")
+
+stargazer(col1c, col2c, col3c, col4c, type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE)
+
+cat("}")
+```
+
+```{r, echo = FALSE, results='asis'}
+
+cat("\\scalebox{.9}{")
+
+stargazer(col5c, col6c, col7c, col8c, column.labels = c("(5)", "(6)", "(7)", "(8)"), model.numbers = FALSE, type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE)
+
+cat("}")
+```
+
 \newpage
 
 # Task C
@@ -161,4 +253,4 @@ tm_shape(spli) +
 
 # Task D
 
-The image is a screenshot, and those are conventionally stored in PNG format. The photo _contained_ in the screenshot is a photograph, and it is difficult to guess which format it was originally saved in. Let's say it's JPEG. Then, someone inserted the image into the assignment PDF, meaning it is technically not stored as a PNG anymore. What all those ways of storing the image have in common is that they are **raster formats**, as they consist of individual pixels. And even if we print the document containing the image, it gets printed as dots, which are not exactly pixels, but cetrainly form a raster rather than a vector.
+The image is a screenshot, and those are conventionally stored in PNG format. The photo _contained_ in the screenshot is a photograph, and it is difficult to guess which format it was originally saved in. Let's say it's JPEG. Then, someone inserted the image into the assignment PDF, meaning it is technically not stored as a PNG anymore. What all those ways of storing the image have in common is that they are **raster formats**, as they consist of individual pixels. And even if we print the document containing the image, it gets printed as dots, which are not exactly pixels, but certainly form a raster rather than a vector.
