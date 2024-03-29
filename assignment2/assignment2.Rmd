@@ -13,6 +13,7 @@ output:
 header-includes: 
   - \usepackage{tcolorbox}
   - \usepackage{graphicx}
+  - \usepackage{booktabs}
   - \usepackage[default]{lato}
 papersize: a4
 geometry: margin = 2cm
@@ -60,7 +61,9 @@ pacman::p_load(
   magrittr,
   sf,
   stargazer,
-  conleyreg
+  conleyreg,
+  estimatr,
+  fixest
 )
 
 
@@ -157,10 +160,11 @@ tm_shape(spli) +
 
 ## Replication of Table 2
 
+Below are code and results of our replication of Table 2 from Valencia Caicedo (2019). Since the original author used Stata's robust standard errors, a notorious problem for replication in R, we specifically report Stata-style standard errors in the table below using the `starprep` function from the `estimatr` package. Using these standard errors, we can reproduce both coefficients and standard errors exactly.
+
 ```{r}
 
 # Replicate Results -------------------------------------------------------
-
 col1 <- lm(illiteracy ~ distmiss + lati + longi + corr + ita + mis + mis1, data = litr)
 col2 <- lm(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litr)
 
@@ -175,13 +179,19 @@ col6 <- lm(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + 
 litr_pry <- subset(litr, country == "Paraguay")
 col7 <- lm(illiteracy ~ distmiss + ita, data = litr_pry)
 col8 <- lm(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + river + coast + ita, data = litr_pry)
+
 ```
 
 ```{r, echo = FALSE, results='asis'}
 
 cat("\\scalebox{.9}{")
 
-stargazer(col1, col2, col3, col4, type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE)
+
+
+stargazer(col1, col2, col3, col4,
+          type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE,
+          se = starprep(col1, col2, col3, col4, se_type = "stata"),
+          omit.stat = "f")
 
 cat("}")
 ```
@@ -190,11 +200,15 @@ cat("}")
 
 cat("\\scalebox{.9}{")
 
-stargazer(col5, col6, col7, col8, column.labels = c("(5)", "(6)", "(7)", "(8)"), model.numbers = FALSE, type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE)
+stargazer(col5, col6, col7, col8,
+          type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE,
+          se = starprep(col5, col6, col7, col8, se_type = "stata"),
+          omit.stat = "f")
 
 cat("}")
 ```
 
+Next, we try to reproduce the Conley standard errors. We try two different approaches, first using the `conleyreg` package and then using the `fixest` package. Valencia Caicedo (2019) specifies a cutoff distance of 0.1 degrees. Both packages we use only allow us to specify the cutoff distance in kilometers, so for the sake of simplicity, we use the distance that 0.1 degrees equal at the equator, which is 6 nautical miles, or approximately 11.112 kilometers. We first print the results from the `conleyreg` package and then from the `fixest` package.
 
 ```{r}
 lit1 <- litr %>%
@@ -243,6 +257,36 @@ stargazer(col5c, col6c, col7c, col8c, column.labels = c("(5)", "(6)", "(7)", "(8
 
 cat("}")
 ```
+
+```{r}
+col1cf <- feols(illiteracy ~ distmiss + lati + longi + corr + ita + mis + mis1, data = litr, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+col2cf <- feols(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litr, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+
+col3cf <- feols(illiteracy ~ distmiss + lati + longi + as.factor(mesorregi), data = litr_bra, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+col4cf <- feols(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + as.factor(mesorregi), data = litr_bra, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+
+col5cf <- feols(illiteracy ~ distmiss + lati + longi + corr, data = litr_arg, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+col6cf <- feols(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr, data = litr_arg, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+
+col7cf <- feols(illiteracy ~ distmiss + ita, data = litr_pry, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+col8cf <- feols(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + river + coast + ita, data = litr_pry, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+```
+
+```{r, echo = FALSE, results='asis'}
+cat("\\scalebox{.8}{")
+etable(col1cf, col2cf, col3cf, col4cf, col5cf, col6cf, col7cf, col8cf, tex = TRUE)
+cat("}")
+```
+
+Evidently, we could not reproduce the exact Conley standard errors reported in Valencia Caicedo (2019). And the two packages yielded different errors even though we specified the same cutoff (11.112 kilometers) and the same method of distance calculation (spherical). 
 
 \newpage
 

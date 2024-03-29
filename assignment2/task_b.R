@@ -9,7 +9,9 @@ pacman::p_load(
   magrittr,
   stargazer,
   conleyreg,
-  janitor
+  janitor,
+  estimatr,
+  fixest
 )
 
 
@@ -122,7 +124,11 @@ litr_pry <- subset(litr, country == "Paraguay")
 col7 <- lm(illiteracy ~ distmiss + ita, data = litr_pry)
 col8 <- lm(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + river + coast + ita, data = litr_pry)
 
-stargazer(col1, col2, col3, col4, col5, col6, col7, col8, type = "latex")
+
+stargazer(col1, col2, col3, col4, col5, col6, col7, col8,
+          type = "latex",
+          se = starprep(col1, col2, col3, col4, col5, col6, col7, col8, se_type = "stata"),
+          omit.stat = "f")
 
 
 lit1 <- litr %>%
@@ -152,3 +158,34 @@ col7c <- conleyreg(illiteracy ~ distmiss + ita, data =  lit1_pry,
                    dist_cutoff = 11.112, lat = "lat", lon = "lon")
 col8c <- conleyreg(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + river + coast + ita, data =  lit1_pry,
                    dist_cutoff = 11.112, lat = "lat", lon = "lon")
+
+stargazer(col1c, col2c, col3c, col4c, col5c, col6c, col7c, col8c, type = "text")
+
+# Assuming the fixest package is already loaded
+# library(fixest)
+
+# Model specifications using feols() from the fixest package
+
+# Models for the full dataset
+col1cf <- feols(illiteracy ~ distmiss + lati + longi + corr + ita + mis + mis1, data = litr, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+col2cf <- feols(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litr, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+
+col3cf <- feols(illiteracy ~ distmiss + lati + longi + as.factor(mesorregi), data = litr_bra, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+col4cf <- feols(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + as.factor(mesorregi), data = litr_bra, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+
+col5cf <- feols(illiteracy ~ distmiss + lati + longi + corr, data = litr_arg, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+col6cf <- feols(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr, data = litr_arg, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+
+col7cf <- feols(illiteracy ~ distmiss + ita, data = litr_pry, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+col8cf <- feols(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + river + coast + ita, data = litr_pry, 
+                 vcov_conley(lat = "lati", lon = "longi", cutoff = 11.112, distance = "spherical"))
+
+etable(col1c, col2c, col3c, col4c, col5c, col6c, col7c, col8c)
+
