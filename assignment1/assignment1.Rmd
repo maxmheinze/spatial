@@ -62,6 +62,7 @@ Next, we create the desired function.
 # Create the function -----------------------------------------------------
 
 boston_quick_ols <- function(dependent, ...) {
+  require(MASS)
   
   # Create a formula string from the inputs
   independents <- paste(c(...), collapse = " + ")
@@ -92,11 +93,13 @@ boston_quick_ols <- function(dependent, ...) {
 
 ## A Simple Linear Model
 
-Next, we apply the function, using a collection of four independent variables.
+Next, we apply the function, using a collection of four independent variables. We predict `medv`, the median home value variable given in the dataset, based on the average number of rooms `rm`, the proportion of homes built prior to 1940 `age`, the distance mean to five Boston employment centers `dis`, and the concentration of nitrogen oxides `nox`. We get the following results:
 
 ```{r, out.width = "50%", fig.align = "center"}
 boston_quick_ols("medv", "rm", "age", "dis", "nox")
 ```
+
+\newpage
 
 # Task B
 
@@ -424,6 +427,7 @@ print(avg_estimate)
 
 The average $\beta$ coefficient of 1,000 simulations was `r avg_estimate`, and we conclude the estimate is downward biased in magnitude, since the true value of $\beta$ was --1.
 
+\newpage
 
 # Task C
 
@@ -447,13 +451,15 @@ pacman::p_load(
 
 We download a shapefile for NUTS2 region and a dataset that includes fertility rates at the same regional level. 
 ```{r, out.width = "50%", fig.align = "center"}
-temp <- tempfile(fileext = ".zip")
+# uncomment in order to download the files anew
 
-download.file("http://ec.europa.eu/eurostat/cache/GISCO/distribution/v2/nuts/download/ref-nuts-2021-03m.shp.zip", temp)
+# temp <- tempfile(fileext = ".zip")
 
-outDir <- "./data"
-unzip(temp, exdir=outDir)
-unzip("./data/NUTS_RG_03M_2021_4326_LEVL_2.shp.zip", exdir=outDir)
+# download.file("http://ec.europa.eu/eurostat/cache/GISCO/distribution/v2/nuts/download/ref-nuts-2021-03m.shp.zip", temp)
+
+# outDir <- "./assignment1/data"
+# unzip(temp, exdir=outDir)
+# unzip("./data/NUTS_RG_03M_2021_4326_LEVL_2.shp.zip", exdir=outDir)
 
 #Data of interest at NUTS 2 level (Regional fertility rate)
 EurostatTOC <- get_eurostat_toc()
@@ -464,7 +470,7 @@ df1 <- get_eurostat("tgs00100", time_format = "raw")
 ## Shapefile CRS
 Now we read the shapefile and find out which Coordinate Reference System (CRS) it uses.
 ```{r, out.width = "50%", fig.align = "center"}
-shp1 <- st_read(dsn = "./data", layer ="NUTS_RG_03M_2021_4326_LEVL_2") 
+shp1 <- st_read(dsn = "./assignment1/data", layer ="NUTS_RG_03M_2021_4326_LEVL_2") 
 
 #Find out CRS of the shapefile
 CRS <- st_crs(shp1)
@@ -503,7 +509,7 @@ Now we create the first visualization using a continuous scale.
 
 ggplot() +
   geom_sf(data = merged_shp1, aes(fill = values)) +
-  scale_fill_continuous(name = "Fertility Rate") +
+  scale_fill_viridis_c(name = "Fertility Rate", option = "inferno") +
   labs(title = "Fertility Rate by Region") +
   theme_minimal()
 ```
@@ -539,6 +545,7 @@ We save the first visualization (continuous scale) in a PNG format, which is a r
 #ggsave("visualization_2.pdf", plot = p, device = "pdf")
 ```
 
+\newpage
 
 # Task D
 
