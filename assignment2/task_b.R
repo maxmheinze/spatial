@@ -189,3 +189,22 @@ col8cf <- feols(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + riv
 
 etable(col1c, col2c, col3c, col4c, col5c, col6c, col7c, col8c)
 
+
+
+
+# Different Distance Measures ---------------------------------------------
+
+litrd <- litr %>%
+  mutate(distmiss_log = log(distmiss),
+         distmiss_exp = exp(-distmiss/200),
+         distmiss_gau = exp(-(distmiss^2)/(2*100^2)))
+
+col2_reg <- lm(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litrd)
+col2_log <- lm(illiteracy ~ distmiss_log + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litrd)
+col2_exp <- lm(illiteracy ~ distmiss_exp + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litrd)
+col2_gau <- lm(illiteracy ~ distmiss_gau + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litrd)
+
+stargazer(col2_reg, col2_log, col2_exp, col2_gau,
+          type = "text",
+          se = starprep(col2_reg, col2_log, col2_exp, col2_gau, se_type = "stata"),
+          omit.stat = "f")

@@ -49,7 +49,7 @@ Text
 
 We create four maps:
 
-```{r, out.width = "60%", fig.align = "center", echo = FALSE}
+```{r, out.width = "70%", fig.align = "center", echo = FALSE, dev = "png", dpi = 300}
 
 # Header ------------------------------------------------------------------
 
@@ -122,7 +122,7 @@ tm_shape(spli) +
 # Jesuit Distance Map -----------------------------------------------------
 
 tm_shape(spli) + 
-  tm_fill("distmiss", palette = "Purples", style = "equal", n = 10) + 
+  tm_fill("distmiss", palette = "-Purples", style = "equal", n = 10) + 
   tm_borders(col = "#BBBBBB") + 
   tm_shape(shp1) + 
   tm_borders(col = "#444444") + 
@@ -141,7 +141,7 @@ tm_shape(spli) +
 # Franciscan Distance Map -------------------------------------------------
 
 tm_shape(spli) + 
-  tm_fill("distfran", palette = "Greens", style = "equal", n = 10) + 
+  tm_fill("distfran", palette = "-Greens", style = "equal", n = 10) + 
   tm_borders(col = "#BBBBBB") + 
   tm_shape(shp1) + 
   tm_borders(col = "#444444") + 
@@ -183,7 +183,7 @@ col8 <- lm(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + river + 
 ```
 
 ```{r, echo = FALSE, results='asis'}
-
+cat("\\begin{center}")
 cat("\\scalebox{.9}{")
 
 
@@ -194,10 +194,11 @@ stargazer(col1, col2, col3, col4,
           omit.stat = "f")
 
 cat("}")
+cat("\\end{center}")
 ```
 
 ```{r, echo = FALSE, results='asis'}
-
+cat("\\begin{center}")
 cat("\\scalebox{.9}{")
 
 stargazer(col5, col6, col7, col8,
@@ -206,6 +207,7 @@ stargazer(col5, col6, col7, col8,
           omit.stat = "f")
 
 cat("}")
+cat("\\end{center}")
 ```
 
 Next, we try to reproduce the Conley standard errors. We try two different approaches, first using the `conleyreg` package and then using the `fixest` package. Valencia Caicedo (2019) specifies a cutoff distance of 0.1 degrees. Both packages we use only allow us to specify the cutoff distance in kilometers, so for the sake of simplicity, we use the distance that 0.1 degrees equal at the equator, which is 6 nautical miles, or approximately 11.112 kilometers. We first print the results from the `conleyreg` package and then from the `fixest` package.
@@ -241,21 +243,23 @@ col8c <- conleyreg(illiteracy ~ distmiss + area + tempe + alti + preci + rugg + 
 ```
 
 ```{r, echo = FALSE, results='asis'}
-
+cat("\\begin{center}")
 cat("\\scalebox{.9}{")
 
 stargazer(col1c, col2c, col3c, col4c, type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE)
 
 cat("}")
+cat("\\end{center}")
 ```
 
 ```{r, echo = FALSE, results='asis'}
-
+cat("\\begin{center}")
 cat("\\scalebox{.9}{")
 
 stargazer(col5c, col6c, col7c, col8c, column.labels = c("(5)", "(6)", "(7)", "(8)"), model.numbers = FALSE, type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE)
 
 cat("}")
+cat("\\end{center}")
 ```
 
 ```{r}
@@ -288,9 +292,212 @@ cat("}")
 
 Evidently, we could not reproduce the exact Conley standard errors reported in Valencia Caicedo (2019). And the two packages yielded different errors even though we specified the same cutoff (11.112 kilometers) and the same method of distance calculation (spherical). 
 
+## Ways to Use Distance
+
+In his specification, Felipe Valencia Caicedo (2019) uses the following specification (Eq. 1 in the paper):
+
+$$
+Y_{2000,ij} = \alpha + \beta d(M_{ij}) + \gamma GEO_{ij}+\mu_j + \varepsilon_{ij},
+$$
+
+where $d(\cdot)$ is described as either being a dummy for the presence of a mission or the plain (i.e., untransformed) distance, although we do not fine examples of the former in any of the printed tables in the paper, so we will just be calling it the distance. The decaying impact of a mission can be plotted against distance as follows:
+
+```{r, echo = FALSE, out.width = "50%", fig.align = "center"}
+ggplot() +
+  geom_function(col = "#995082", size = 1.5, fun = function(x) x) +
+  xlim(0, 1000) +
+  labs(x = "x", y = "d(x)") +
+  theme_minimal() +
+  theme(text = element_text(family = "Lato"))
+```
+
+If we view $d(\cdot)$ as _impact_ exerted by a mission, it might be more intuitive to plot the negative of it, so that a higher value corresponds to more impact.
+
+```{r, echo = FALSE, out.width = "50%", fig.align = "center"}
+ggplot() +
+  geom_function(col = "#995082", size = 1.5, fun = function(x) -x) +
+  xlim(0, 1000) +
+  labs(x = "x", y = "-d(x)") +
+  theme_minimal() +
+  theme(text = element_text(family = "Lato"))
+```
+
+If we draw a map and plot distance from a mission using this function, we get the same map as above.
+
+```{r, echo = FALSE, out.width = "70%", fig.align = "center", dev = "png", dpi = 300}
+tm_shape(spli) + 
+  tm_fill("distmiss", palette = "-Purples", style = "equal", n = 10) + 
+  tm_borders(col = "#BBBBBB") + 
+  tm_shape(shp1) + 
+  tm_borders(col = "#444444") + 
+  tm_text("NAME_1", size = 0.75, col = "black", bg.color = "#FFFFFF") +
+  tm_shape(shp0) + 
+  tm_borders(col = "#000000") +
+  tm_compass(position = c("right", "top"), size = 2) +
+  tm_scale_bar(position = c("right", "bottom"), text.size = 0.5) +
+  tm_layout(title = "Distance from Jesuit Missions, Linear", 
+            title.bg.color = "white", 
+            legend.position = c("left", "bottom"),
+            legend.bg.color = "white", 
+            frame = FALSE,
+            fontfamily = "Lato")
+```
+
+
+Letting $d$ be
+
+$$
+d: \mathbb{R} \to \mathbb{R}, \quad x \mapsto x
+$$
+
+means that we attribute the same change in impact to moving from 0km from the treatment position to 100km from it, as to moving from 900km distance to 1000km. This is quite an assumption. Alternatively, we could use the **logarithm** of the distance, 
+
+$$
+d: \mathbb{R} \to \mathbb{R}, \quad x \mapsto \mathrm{log}(x),
+$$
+
+like this:
+
+```{r, echo = FALSE, out.width = "50%", fig.align = "center"}
+ggplot() +
+  geom_function(col = "#995082", size = 1.5, fun = function(x) -log(x)) +
+  xlim(0, 1000) +
+  labs(x = "x", y = "-d(x)") +
+  theme_minimal() +
+  theme(text = element_text(family = "Lato"))
+```
+
+This gives the following map.
+
+```{r, echo = FALSE, out.width = "70%", fig.align = "center", dev = "png", dpi = 300}
+tm_shape(mutate(spli, distmissx = log(distmiss))) + 
+  tm_fill("distmissx", palette = "-Purples", style = "equal", n = 10) + 
+  tm_borders(col = "#BBBBBB") + 
+  tm_shape(shp1) + 
+  tm_borders(col = "#444444") + 
+  tm_text("NAME_1", size = 0.75, col = "black", bg.color = "#FFFFFF") +
+  tm_shape(shp0) + 
+  tm_borders(col = "#000000") +
+  tm_compass(position = c("right", "top"), size = 2) +
+  tm_scale_bar(position = c("right", "bottom"), text.size = 0.5) +
+  tm_layout(title = "Distance from Jesuit Missions, Logarithmic", 
+            title.bg.color = "white", 
+            legend.position = c("left", "bottom"),
+            legend.bg.color = "white", 
+            frame = FALSE,
+            fontfamily = "Lato")
+```
+
+We can see that unlike in the linear case, the differences between distances at a greater length from the locations of treatment are weighted down, whereas distance differences closer to the mission are exaggerated. It could make sense to use such a specification instead of a linear one if we suspect impacts of a mission to be roughly comparable between places that are 400 or 500 kilometers from the closest mission, or if we are concerned that portions of Rio Grande do Sul are included in the analysis that are much farther from where Jesuits went than portions of Argentinian or Paraguayan states that were not included.
+
+Alternatively, we could consider a **negative exponential** specification,
+
+$$
+d: \mathbb{R} \to \mathbb{R}, \quad x \mapsto \mathrm{exp}(-\lambda x),
+$$
+
+which is plotted below for $\lambda = \tfrac{1}{500}$:
+
+```{r, echo = FALSE, out.width = "50%", fig.align = "center"}
+ggplot() +
+  geom_function(col = "#995082", size = 1.5, fun = function(x) exp(-x/200)) +
+  xlim(0, 1000) +
+  labs(x = "x", y = "-d(x)") +
+  theme_minimal() +
+  theme(text = element_text(family = "Lato"))
+```
+
+Applying to our data, it looks like this:
+
+```{r, echo = FALSE, out.width = "70%", fig.align = "center", dev = "png", dpi = 300}
+tm_shape(mutate(spli, distmissx = exp(-distmiss/200))) + 
+  tm_fill("distmissx", palette = "Purples", style = "equal", n = 10) + 
+  tm_borders(col = "#BBBBBB") + 
+  tm_shape(shp1) + 
+  tm_borders(col = "#444444") + 
+  tm_text("NAME_1", size = 0.75, col = "black", bg.color = "#FFFFFF") +
+  tm_shape(shp0) + 
+  tm_borders(col = "#000000") +
+  tm_compass(position = c("right", "top"), size = 2) +
+  tm_scale_bar(position = c("right", "bottom"), text.size = 0.5) +
+  tm_layout(title = "Distance from Jesuit Missions, Negative Exponential", 
+            title.bg.color = "white", 
+            legend.position = c("left", "bottom"),
+            legend.bg.color = "white", 
+            frame = FALSE,
+            fontfamily = "Lato")
+```
+
+By adjusting $\lambda$, we can make the decay more or less “aggressive.” With our present specification, it is “between” the linear and logarithmic cases.
+
+Lastly, we could consider using a **Gaussian** decay function, like this:
+
+$$
+d: \mathbb{R} \to \mathbb{R}, \quad x \mapsto \mathrm{exp}\left(-\frac{x^2}{2\sigma^2}\right)
+$$
+Letting $\sigma=100$ gives the following:
+
+```{r, echo = FALSE, out.width = "50%", fig.align = "center"}
+ggplot() +
+  geom_function(col = "#995082", size = 1.5, fun = function(x) exp(-(x^2)/(2*100^2))) +
+  xlim(0, 1000) +
+  labs(x = "x", y = "Gaussian Distribution") +
+  theme_minimal() +
+  theme(text = element_text(family = "Lato"))
+```
+
+We can see that by using the Gaussian decay function, we can model something that is closer to a “cutoff.” Applying this function to the data gives the following map:
+
+```{r, echo = FALSE, out.width = "70%", fig.align = "center", dev = "png", dpi = 300}
+tm_shape(mutate(spli, distmissx = exp(-(distmiss^2)/(2*100^2)))) + 
+  tm_fill("distmissx", palette = "Purples", style = "equal", n = 10) + 
+  tm_borders(col = "#BBBBBB") + 
+  tm_shape(shp1) + 
+  tm_borders(col = "#444444") + 
+  tm_text("NAME_1", size = 0.75, col = "black", bg.color = "#FFFFFF") +
+  tm_shape(shp0) + 
+  tm_borders(col = "#000000") +
+  tm_compass(position = c("right", "top"), size = 2) +
+  tm_scale_bar(position = c("right", "bottom"), text.size = 0.5) +
+  tm_layout(title = "Distance from Jesuit Missions, Gaussian", 
+            title.bg.color = "white", 
+            legend.position = c("left", "bottom"),
+            legend.bg.color = "white", 
+            frame = FALSE,
+            fontfamily = "Lato")
+```
+
+We can clearly see that different functions yield vastly different distance measures across municipalities. So it is quite sensible to suspect that estimation results are subject to the choice of distance measure. To check this, we run the regression from column (2) of Table 2 again -- but each time with a different distance measure.
+
+```{r}
+litrd <- litr %>%
+  mutate(distmiss_log = log(distmiss),
+         distmiss_exp = exp(-distmiss/200),
+         distmiss_gau = exp(-(distmiss^2)/(2*100^2)))
+
+col2_reg <- lm(illiteracy ~ distmiss + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litrd)
+col2_log <- lm(illiteracy ~ distmiss_log + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litrd)
+col2_exp <- lm(illiteracy ~ distmiss_exp + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litrd)
+col2_gau <- lm(illiteracy ~ distmiss_gau + lati + longi + area + tempe + alti + preci + rugg + river + coast + corr + ita + mis + mis1, data = litrd)
+```
+
+```{r, echo = FALSE, results='asis'}
+cat("\\begin{center}")
+stargazer(col2_reg, col2_log, col2_exp, col2_gau,
+          type = "latex",
+          se = starprep(col2_reg, col2_log, col2_exp, col2_gau, se_type = "stata"),
+          omit.stat = "f",
+          float = FALSE,
+          header=FALSE)
+cat("\\end{center}")
+```
+
+Of course, coefficient magnitudes cannot be directly compared, since we wildly scaled and transformed the distance measure. Even the sign changes do not necessarily need to worry us, since we transformed distance measures in a way that they sometimes shrank and sometimes increased with increasing distance. However, we see that using the different distance measures, effect sizes are no longer statistically different from zero.
+
 \newpage
 
 # Task C
+
 ## The perils of ignoring peer effects
 
 \newpage
