@@ -8,8 +8,11 @@ date: "April 12, 2024"
 output: 
   pdf_document:
     toc: true
+    citation_package: biblatex
     includes:
       in_header: !expr file.path(rprojroot::find_rstudio_root_file(), "helper", "wrap_code.tex")
+bibliography: references.bib
+biblio-style: apa
 header-includes: 
   - \usepackage{tcolorbox}
   - \usepackage{graphicx}
@@ -18,6 +21,7 @@ header-includes:
 papersize: a4
 geometry: margin = 2cm
 urlcolor: DarkOrchid!65!black
+citecolor: DarkOrchid!65!black
 ---
 
 ```{r, setup, include = FALSE}
@@ -160,7 +164,7 @@ tm_shape(spli) +
 
 ## Replication of Table 2
 
-Below are code and results of our replication of Table 2 from Valencia Caicedo (2019). Since the original author used Stata's robust standard errors, a notorious problem for replication in R, we specifically report Stata-style standard errors in the table below using the `starprep` function from the `estimatr` package. Using these standard errors, we can reproduce both coefficients and standard errors exactly.
+Below are code and results of our replication of Table 2 from \textcite{valencia2019}. Since the original author used Stata's robust standard errors, a notorious problem for replication in R, we specifically report Stata-style standard errors in the table below using the `starprep` function from the `estimatr` package. Using these standard errors, we can reproduce both coefficients and standard errors exactly.
 
 ```{r}
 
@@ -210,7 +214,7 @@ cat("}")
 cat("\\end{center}")
 ```
 
-Next, we try to reproduce the Conley standard errors. We try two different approaches, first using the `conleyreg` package and then using the `fixest` package. Valencia Caicedo (2019) specifies a cutoff distance of 0.1 degrees. Both packages we use only allow us to specify the cutoff distance in kilometers, so for the sake of simplicity, we use the distance that 0.1 degrees equal at the equator, which is 6 nautical miles, or approximately 11.112 kilometers. We first print the results from the `conleyreg` package and then from the `fixest` package.
+Next, we try to reproduce the Conley standard errors. We try two different approaches, first using the `conleyreg` package and then using the `fixest` package. \textcite{valencia2019} specifies a cutoff distance of 0.1 degrees. Both packages we use only allow us to specify the cutoff distance in kilometers, so for the sake of simplicity, we use the distance that 0.1 degrees equal at the equator, which is 6 nautical miles, or approximately 11.112 kilometers. We first print the results from the `conleyreg` package and then from the `fixest` package.
 
 ```{r}
 lit1 <- litr %>%
@@ -290,11 +294,11 @@ etable(col1cf, col2cf, col3cf, col4cf, col5cf, col6cf, col7cf, col8cf, tex = TRU
 cat("}")
 ```
 
-Evidently, we could not reproduce the exact Conley standard errors reported in Valencia Caicedo (2019). And the two packages yielded different errors even though we specified the same cutoff (11.112 kilometers) and the same method of distance calculation (spherical). 
+Evidently, we could not reproduce the exact Conley standard errors reported in \textcite{valencia2019}. And the two packages yielded different errors even though we specified the same cutoff (11.112 kilometers) and the same method of distance calculation (spherical). 
 
 ## Ways to Use Distance
 
-In his specification, Felipe Valencia Caicedo (2019) uses the following specification (Eq. 1 in the paper):
+In his specification, Felipe \textcite{valencia2019} uses the following specification (Eq. 1 in the paper):
 
 $$
 Y_{2000,ij} = \alpha + \beta d(M_{ij}) + \gamma GEO_{ij}+\mu_j + \varepsilon_{ij},
@@ -402,7 +406,7 @@ which is plotted below for $\lambda = \tfrac{1}{500}$:
 ggplot() +
   geom_function(col = "#995082", size = 1.5, fun = function(x) exp(-x/200)) +
   xlim(0, 1000) +
-  labs(x = "x", y = "-d(x)") +
+  labs(x = "x", y = "d(x)") +
   theme_minimal() +
   theme(text = element_text(family = "Lato"))
 ```
@@ -441,7 +445,7 @@ Letting $\sigma=100$ gives the following:
 ggplot() +
   geom_function(col = "#995082", size = 1.5, fun = function(x) exp(-(x^2)/(2*100^2))) +
   xlim(0, 1000) +
-  labs(x = "x", y = "Gaussian Distribution") +
+  labs(x = "x", y = "d(x)") +
   theme_minimal() +
   theme(text = element_text(family = "Lato"))
 ```
@@ -483,16 +487,30 @@ col2_gau <- lm(illiteracy ~ distmiss_gau + lati + longi + area + tempe + alti + 
 
 ```{r, echo = FALSE, results='asis'}
 cat("\\begin{center}")
+cat("\\scalebox{.8}{")
 stargazer(col2_reg, col2_log, col2_exp, col2_gau,
           type = "latex",
           se = starprep(col2_reg, col2_log, col2_exp, col2_gau, se_type = "stata"),
           omit.stat = "f",
           float = FALSE,
           header=FALSE)
+cat("}")
 cat("\\end{center}")
 ```
 
 Of course, coefficient magnitudes cannot be directly compared, since we wildly scaled and transformed the distance measure. Even the sign changes do not necessarily need to worry us, since we transformed distance measures in a way that they sometimes shrank and sometimes increased with increasing distance. However, we see that using the different distance measures, effect sizes are no longer statistically different from zero.
+
+## Persistence and Space, or: Where's Waldo?
+
+Because any text about spatial autocorrelation would be incomplete without reciting Waldo\footnote{Here he is.} Tobler's First Law of Geography, here it is in all its beauty: “Everything is related to everything else, but near things are more related than distant things.” Applied to the present context, this has important implications.
+
+First, the presence of a mission in some given municipality is likely autocorrelated with whether adjacent municipalities were subject to missionary activity too. If the first missionaries went to some place in what we today call Misiones, it is likely that subsequent missionaries built on locally specific knowledge of earlier missions and settled near them. Our distance plots, especially the logarithmic one, are a good indication of that autocorrelation, since we can see that all missions were more or less in the same region. 
+
+Second, we can assume literacy rates to be spatially autocorrelated as well. Again, we can see this from the map we originally produced where we plotted literacy rates across the regions analyzed by \textcite{valencia2019}. We can see that high literacy rates concentrate in one region around the Argentinian state of Misiones and the northwestern part of Rio Grande do Sul, and in one region in the eastern part of Rio Grande do Sul. And if we take a glance at the map below, we can also see that these regions are clusters of higher population density.
+
+\textcite{kelly2021} notes that this covert relation leads to standard errors usually being too low since the presence of spatial clusters in two variables means that whatever correlation exists between the variables in one locality is likely to also be present in adjacent localities. He also notes that different types of available standard error corrections lead to widely different results. Conley standard errors, which \textcite{valencia2019} uses as a robustness check, tend to be the most conservative of the corrections. Having standard errors that are too small, of course, does not bias the estimate, but will cause false positive results. 
+
+The same can be thought of if there are potential confounders. If there is a unobserved spatial variable that influences the outcome and that is correlated with the covariates that are included in the model, the coefficient estimates will be biased \parencite{dupont2023}. Assuming the variables considered in the model in \textcite{valencia2019} behave like most other socioeconomic variables in space, we can assume that any spatial effect will be correlated with the model covariates, leading to the possibility of biased coefficients. 
 
 \newpage
 
@@ -505,3 +523,5 @@ Of course, coefficient magnitudes cannot be directly compared, since we wildly s
 # Task D
 
 The image is a screenshot, and those are conventionally stored in PNG format. The photo _contained_ in the screenshot is a photograph, and it is difficult to guess which format it was originally saved in. Let's say it's JPEG. Then, someone inserted the image into the assignment PDF, meaning it is technically not stored as a PNG anymore. What all those ways of storing the image have in common is that they are **raster formats**, as they consist of individual pixels. And even if we print the document containing the image, it gets printed as dots, which are not exactly pixels, but certainly form a raster rather than a vector.
+
+\newpage

@@ -1,0 +1,19 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{Task A}{2}{section*.2}%
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{Task B}{3}{section*.3}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{Nice Maps}{3}{section*.4}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{Replication of Table 2}{4}{section*.5}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{Ways to Use Distance}{9}{section*.6}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{Persistence and Space, or: Where's Waldo?}{15}{section*.7}%
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{Task C}{16}{section*.8}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{The perils of ignoring peer effects}{16}{section*.9}%
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{Task D}{17}{section*.10}%
