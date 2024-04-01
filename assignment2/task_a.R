@@ -19,6 +19,7 @@ data <- data1[vars]
 merged_shp <- left_join(shp, data, by=c("Id"="IDb"))
 countries <- c("AT", "DE","ES","FR","IT","PT")
 df <- merged_shp[grep(paste(countries, collapse = "|"),merged_shp$Id),]
+df <- na.omit(df)
 df$prgrowth <- ((df$pr103b-df$pr80b)/df$pr80b)*100
 
 #Visualization--------------------------------------------
