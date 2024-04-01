@@ -41,3 +41,37 @@ ggplot() +
 
 
 
+#Create weight matrices---------------
+#Based on distance threshold
+
+#Create centroids of regions
+centr <- st_centroid(df)
+coord <- st_coordinates(centr)
+dist <- dnearneigh(coord, 0, 10000, row.names=df$Id)
+summary(dist)
+
+#It appears that setting a maximum value of 10000 in the distance threshold yields too many links per region.
+#Therefore, we will compute the minimum value of the max. distance threshold so that no region is isolated.
+
+#Minimum distance threshold so there are no disconnected regions
+k1 <- knearneigh(coord, k=1)
+k1 <- knn2nb(k1)
+link.max <- max(unlist(nbdists(k1, coords=coord)))
+link.max
+
+#We use the obtained maximum value of the threshold
+dist <- dnearneigh(coord, 0, link.max, row.names=df$Id)
+summary(dist)
+#With this new distance threshold, each region has an average of 8.3 links.
+
+#Now, we compute the distance between the centroids.
+distance <- st_distance(centr)
+print(distance)
+
+#We create a binary weight matrix, where each region has a value of 1 if its kth neighbor is below
+#the maximum distance threshold (2.65) and 0 if it is above.
+w_distance <- ifelse(distance <= link.max, 1, 0)
+diag(w_distance) <- 0
+
+#Smooth distance-decay---------------
+
