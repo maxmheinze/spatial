@@ -64,14 +64,33 @@ dist <- dnearneigh(coord, 0, link.max, row.names=df$Id)
 summary(dist)
 #With this new distance threshold, each region has an average of 8.3 links.
 
-#Now, we compute the distance between the centroids.
-distance <- st_distance(centr)
-print(distance)
-
-#We create a binary weight matrix, where each region has a value of 1 if its kth neighbor is below
+#Now, we create a weight matrix, where each region has a positive value if its kth neighbor is below
 #the maximum distance threshold (2.65) and 0 if it is above.
-w_distance <- ifelse(distance <= link.max, 1, 0)
-diag(w_distance) <- 0
+w_1 <- nb2mat(dist, style= "W")
 
-#Smooth distance-decay---------------
 
+#Smooth distance-decay-----------------------------------------------------------------------
+#First, we create a smooth distance-decay function so that the value decreases as distance between regions increases
+
+function0 <- function(x){
+  exp(-0.4*x)
+}
+
+#Then, we create a matrix by transforming the distance matrix that contains the distances between centroids with the smooth distance-decay function 
+distance <- st_distance(centr)
+g2 <- matrix(NA, nrow=nrow(distance), ncol=ncol(distance))
+
+for(i in seq_along(distance)){
+  g2[i]<-function0(distance[i])
+}
+
+#Finally, we row-normalize the matrix and set its diagonal to 0 to create a weight matrix.
+w2 <- g2/rowSums(g2)
+diag(w2) <- 0
+
+#Contiguity-based matrix-------------------------------------------------------------------------------------------
+#We construct a matrix such that in the row of each region each element will be positive for contiguous neighbors
+# and 0 otherwise. 
+contiguity <- poly2nb(df, row.names=df$Id, queen=TRUE)
+
+w3 <- nb2mat(contiguity, style = "W", zero.policy = TRUE)
