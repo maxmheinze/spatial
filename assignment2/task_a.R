@@ -66,7 +66,7 @@ summary(dist)
 
 #Now, we create a weight matrix, where each region has a positive value if its kth neighbor is below
 #the maximum distance threshold (2.65) and 0 if it is above.
-w_1 <- nb2mat(dist, style= "W")
+w1 <- nb2mat(dist, style= "W")
 
 
 #Smooth distance-decay-----------------------------------------------------------------------
