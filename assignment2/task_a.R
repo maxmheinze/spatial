@@ -96,7 +96,6 @@ contiguity <- poly2nb(df, row.names=df$Id, queen=TRUE)
 w3 <- nb2mat(contiguity, style = "W", zero.policy = TRUE)
 
 
-
 #Comparing the matrices--------------------------------
 #First, we can compute the sparsity of each matrix (proportion of zero elements).
 sp1 <- sum(w1 == 0)/length(w1)
@@ -115,7 +114,7 @@ eigenw1 <- eigen(w1)$value
 eigenw2 <- eigen(w2)$value
 eigenw3 <- eigen(w3)$value
 
-#Since each matrix has 103 eigenvectors, we focus on the largest 5.
+#Since each matrix has 103 eigenvalues, we focus on the largest 5.
 eigentop1 <- eigenw1[1:5]
 eigentop2 <- eigenw2[1:5]
 eigentop3 <- eigenw3[1:5]
