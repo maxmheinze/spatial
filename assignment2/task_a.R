@@ -94,3 +94,95 @@ diag(w2) <- 0
 contiguity <- poly2nb(df, row.names=df$Id, queen=TRUE)
 
 w3 <- nb2mat(contiguity, style = "W", zero.policy = TRUE)
+
+
+
+#Comparing the matrices--------------------------------
+#First, we can compute the sparsity of each matrix (proportion of zero elements).
+sp1 <- sum(w1 == 0)/length(w1)
+sp2<- sum(w2 == 0)/length(w2)
+sp3 <- sum(w3 == 0)/length(w3)
+sparsity <- c(sp1, sp2, sp3)
+print(sparsity)
+#We observe that the elements of the matrices based on a distance threshold and on contiguity are mostly zero.
+# The matrix based on a smooth distance-decay function has a much smaller proportion of zero elements (only 103, the diagonal elements)
+# On the one hand, given the small distance threshold imposed and the large number of regions it's not surprising that w1 and w3 have a lot of zeros, representing no link with most neighbors.
+#On the other hand, since we use a decaying exponential function to construct w2, even the regions that are furthest away from each other have a positive value. 
+# Therefore, the only zero elements come from the diagonal.
+
+#Then we compute their eigenvalues.
+eigenw1 <- eigen(w1)$value
+eigenw2 <- eigen(w2)$value
+eigenw3 <- eigen(w3)$value
+
+#Since each matrix has 103 eigenvectors, we focus on the largest 5.
+eigentop1 <- eigenw1[1:5]
+eigentop2 <- eigenw2[1:5]
+eigentop3 <- eigenw3[1:5]
+
+eigenvalues <- cbind(eigentop1, eigentop2, eigentop3)
+print(eigenvalues)
+
+#We observe that the top 5 eigenvalues of w1 and w3 are larger than those of w2. This shows there is a stronger spatial autocorrelation level in w1 and w2.
+#On the other hand, the eigenvalues of w1 and w3 appear to decrease gradually, whereas those of w2 decrease more rapidly. This indicates a faster decay in spatial autocorrelation with distance.
+
+#Now, in order to analyze the matrices from a graph theory perspective, we convert the weight matrices into adjacency (binary) matrices.
+d1 <- ifelse(w1 > 0, 1, 0)
+d2 <- ifelse(w2 > 0, 1, 0)
+d3 <- ifelse(w3 > 0, 1, 0)
+
+#Once we have adjacency matrices, we can compute their degree distribution.Note that since w2 has no zero off-diagonal elements, every region is connected to each other,
+#so there is no point on computing the degree distribution of d2.
+
+node_degrees1 <- rowSums(d1)
+node_degrees3 <- rowSums(d3)
+
+hist(node_degrees1, main = "Degree Distribution D1", xlab = "Node Degree", ylab = "Frequency", xlim = c(0,25), ylim = c(0,25))
+hist(node_degrees3, main = "Degree Distribution D3", xlab = "Node Degree", ylab = "Frequency", xlim = c(0,15), ylim = c(0,25))
+
+
+#Plotting the matrices---------------------------
+v1 <- raster(w1)
+v2 <- raster(w2)
+v3 <- raster(w3)
+plot(v1)
+plot(v2)
+plot(v3)
+
+#We observe that w1 and w3 represent a network there are less connections between regions, but the existing links are stronger than those of w2.
+#w2, on the other hand, represents a much more interconnected network, where each region is connected to each other but the links are weaker on average.
+#w2 can help us visualize the clusters in the network. To do so, we must take into account how the countries are ordered in the matrix.
+#The order (from first rows(columns) to last) is Austria, Germany, Spain, France, Italy and Portugal. (This is because the region codes are ordered alphabetically
+# AT, DE, ES, FR, IT, PT). Looking at w2 we observe the biggest cluster is located among the Austrian and German regions (top-left corner). Then, the smaller cluster
+#in the middle represents Spain. As we can see, Spanish regions have a almost non-existing link with Austria and Germany, and their stronger link are related to Portugal (middle of the bottom (or right) part).
+#Then, in the diagonal below Spain we see France. We can see how it is the country with more connections to the rest of countries.
+#Below in the diagonal we observe the cluster formed by the Italian regions. We see that their strongest foreign links are with Austrian regions.
+#Finally, in the very bottom-right corner we see Portugal. It is clear how Portuguese regions are isolated from all countries except Spain.
+
+
+#Computing a measure of spatial autocorrelation for productivity growth------------------------------------------
+
+#To measure spatial autocorrelation, we will compute a Global Moran's I statistic for each matrix.
+
+#(1) Distance threshold matrix
+w1listw <- mat2listw(w1, style = "W") #We tranform w1 into a listw so that moran.test() works
+i1 <- moran.test(df$prgrowth, w1listw)
+i1 <- i1$estimate["Moran I statistic"]
+#(2) Smooth distance-decay  matrix
+w2listw <- mat2listw(w2, style = "W")
+i2 <- moran.test(df$prgrowth, w2listw)
+i2 <- i2$estimate["Moran I statistic"]
+#(3) Contiguity matrix
+w3listw <- mat2listw(w3, style = "W", zero.policy = TRUE)
+i3 <- moran.test(df$prgrowth, w3listw)
+i3 <- i3$estimate["Moran I statistic"]
+
+#I's statistics comparison
+I_score_comparison <- c("",i1, i2, i3)
+names(I_score_comparison) <- c("I's score","w1", "w2", "w3")
+print(I_score_comparison)
+
+#The Global Moran's I score measures spatial autocorrelation, indicating the degree of similarity between neighboring regions in 
+#terms of  productivity growth rate. We observe that w1 and w3 have a similar value around 0.55, indicating a moderate positive spatial autocorrelation between the regions.
+#The I statistic of matrix w2 is somewhat smaller, implying a lower spatial autocorrelation, though it still shows signs of clustering.
+
