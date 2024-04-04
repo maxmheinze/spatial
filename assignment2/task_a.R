@@ -2,7 +2,9 @@
 pacman::p_load(
   dplyr,
   ggplot2,
-  sf
+  sf,
+  spdep,
+  raster
 )
 
 #Set up----------------------------------------------
