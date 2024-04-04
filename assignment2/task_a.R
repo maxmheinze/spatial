@@ -185,3 +185,55 @@ print(I_score_comparison)
 #terms of  productivity growth rate. We observe that w1 and w3 have a similar value around 0.55, indicating a moderate positive spatial autocorrelation between the regions.
 #The I statistic of matrix w2 is somewhat smaller, implying a lower spatial autocorrelation, though it still shows signs of clustering.
 
+#Running OLS regression------------------------------------------------------------
+#"regress the growth of productivity on the initial productivity in 1980,  the investment, and the employment variable."
+#pr80b, pr103b: Productivity of the region in 1980 and 2003
+#lninv1b: log of investment
+#lndens.empb: log of densitiy of employment
+
+
+#We run the regression and store the residuals.
+ols <- lm(prgrowth ~ pr80b + lninv1b + lndens.empb, data = df)
+residuals <- residuals(ols)
+
+#We want to observe if errors are spatially autocorrelated, i.e., if errors of similar size come from regions that are closer in space.
+#To do that, we can compute the spatially lagged errors of the regression. That is, we can multiply our desired weight matrix by the vector of residuals.
+#Note that W*u shows the average value of the residuals of the neighbors of each region. This can show how clustered residuals are in space.
+lagged_residuals_w1 <- lag.listw(w1listw, residuals)
+lagged_residuals_w2 <- lag.listw(w2listw, residuals)
+lagged_residuals_w3 <- lag.listw(w3listw, residuals)
+
+
+#To visually check if the residuals are autocorrelated, we can create scatter plots which relate each residuals to its spatially lagged residual.
+#The intuition behind this is that for each region, its residuals is compared to the average residual value of its neighbors.
+#If there is spatial autocorrelation between residuals, we would expect each residual (ûi) to be of similar size to the the average residual value of its neighbors (W*ûi).
+
+plot(residuals, lagged_residuals_w1, main = "w1", xlab = "û", ylab = "Wû")
+plot(residuals, lagged_residuals_w2, main = "w2", xlab = "û", ylab = "Wû")
+plot(residuals, lagged_residuals_w3, main = "w3", xlab = "û", ylab = "Wû")
+
+#Using all three weight matrices, we observe a clear positive relationship between residuals and their spatially lagged counterparts, implying spatial autocorrelation between errors.
+
+
+#To statistically check for spatial autocorrelation, we can compute once again Global Moran's I using each weight matrix,
+#this time analyzing the residuals.
+iw1 <- moran.test(residuals, w1listw)
+iw1 <- iw1$estimate["Moran I statistic"]
+
+iw2 <- moran.test(residuals, w2listw)
+iw2 <- iw2$estimate["Moran I statistic"]
+
+iw3 <- moran.test(residuals, w3listw)
+iw3 <- iw3$estimate["Moran I statistic"]
+
+I_score_comparison2 <- c("",iw1, iw2, iw3)
+names(I_score_comparison2) <- c("I's score","w1", "w2", "w3")
+print(I_score_comparison2)
+
+#The  statistics related to w1 and w3 imply a moderate level of clustering of errors, whereas if we use w2 to check for spatial autocorrelation, we would obtain a value indicating less clustering.
+
+#The presence of spatial dependence across errors implies that the assumption of independent errors is violated. If we were to run an OLS regression, our estimates would be biased and inconsistent.
+#If we suspect that the errors are spatially autocorrelated, we can use the spatial error model (SEM), using a weight matrix to account for the autocorrelation.
+#On the other hand, if there is spatial dependence between the observations of interest (in our case productivity growth rate), the estimates obtained from a regression will not accurately capture the
+#the true effect of the independent variable, since the parameter might mistakenly attribute effects related to spatial characteristics to that variable.
+#In that case, we could estimate a spatial autoregressive model (SAR), in which the neighbors's characteristics are also considered.
