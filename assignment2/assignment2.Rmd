@@ -54,8 +54,8 @@ pacman::p_load(
 )
 
 #Load dataset and shapefile
-load("./data/data1.rda")
-shp <- st_read(dsn = "./data/EU27.shp", quiet = TRUE)
+load("./assignment2/data/data1.rda")
+shp <- st_read(dsn = "./assignment2/data/EU27.shp", quiet = TRUE)
 
 #Select variables of interest
 vars <- c("IDb", "pr80b", "pr103b", "lninv1b", "lndens.empb")
@@ -451,6 +451,7 @@ cat("\\scalebox{.9}{")
 
 stargazer(col5, col6, col7, col8,
           type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE,
+          column.labels = c("(5)", "(6)", "(7)", "(8)"),
           se = starprep(col5, col6, col7, col8, se_type = "stata"),
           omit.stat = "f")
 
