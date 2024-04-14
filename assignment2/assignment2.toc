@@ -30,6 +30,6 @@
 \defcounter {refsection}{0}\relax 
 \contentsline {section}{Task C}{24}{section*.16}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{The perils of ignoring peer effects}{24}{section*.17}%
+\contentsline {subsection}{The Perils of Ignoring Peer Effects}{24}{section*.17}%
 \defcounter {refsection}{0}\relax 
 \contentsline {section}{Task D}{25}{section*.18}%
