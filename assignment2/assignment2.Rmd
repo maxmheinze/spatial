@@ -4,7 +4,7 @@ author:
   - "Max Heinze (h11742049@s.wu.ac.at)"
   - "Jaime Miravet (h12235992@s.wu.ac.at)"
   - "Jan Trimmel (h11809096@s.wu.ac.at)"
-date: "April 12, 2024"
+date: "April 15, 2024"
 output: 
   pdf_document:
     toc: true
