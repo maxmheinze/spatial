@@ -43,6 +43,8 @@ showtext_auto()
 
 # Task A
 
+## Productivity Growth Map
+
 First, we load both the datafile and shapefile, select the countries of interest, and create the productivity growth rate variable.
 ```{r, warning = FALSE}
 pacman::p_load(
@@ -217,7 +219,7 @@ To measure spatial autocorrelation, we will compute a Global Moran's I statistic
 
 ```{r}
 #(1) Distance threshold matrix
-w1listw <- mat2listw(w1, style = "W") #We tranform w1 into a listw so that moran.test() works
+w1listw <- mat2listw(w1, style = "W") #We transform w1 into a listw so that moran.test() works
 i1 <- moran.test(df$prgrowth, w1listw)
 i1 <- i1$estimate["Moran I statistic"]
 #(2) Smooth distance-decay  matrix
@@ -450,8 +452,9 @@ cat("\\begin{center}")
 cat("\\scalebox{.9}{")
 
 stargazer(col5, col6, col7, col8,
-          type = "latex", header=FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE,
+          type = "latex", header = FALSE, no.space = TRUE, column.sep.width = "3pt", float = FALSE,
           column.labels = c("(5)", "(6)", "(7)", "(8)"),
+          model.numbers = FALSE,
           se = starprep(col5, col6, col7, col8, se_type = "stata"),
           omit.stat = "f")
 
@@ -539,7 +542,7 @@ etable(col1cf, col2cf, col3cf, col4cf, col5cf, col6cf, col7cf, col8cf, tex = TRU
 cat("}")
 ```
 
-Evidently, we could not reproduce the exact Conley standard errors reported in \textcite{valencia2019}. And the two packages yielded different errors even though we specified the same cutoff (11.112 kilometers) and the same method of distance calculation (spherical). 
+Evidently, we could not reproduce the exact Conley standard errors reported in \textcite{valencia2019}. And the two packages yielded different errors even though we specified the same cutoff (11.112 kilometers) and the same method of distance calculation (spherical). Unfortunately, we could not pin down what the reason for those differences was.
 
 ## Ways to Use Distance
 
@@ -549,7 +552,7 @@ $$
 Y_{2000,ij} = \alpha + \beta d(M_{ij}) + \gamma GEO_{ij}+\mu_j + \varepsilon_{ij},
 $$
 
-where $d(\cdot)$ is described as either being a dummy for the presence of a mission or the plain (i.e., untransformed) distance, although we do not fine examples of the former in any of the printed tables in the paper, so we will just be calling it the distance. The decaying impact of a mission can be plotted against distance as follows:
+where $d(\cdot)$ is described as either being a dummy for the presence of a mission or the plain (i.e., untransformed) distance, although we do not find examples of the former in any of the printed tables in the paper, so we will just be calling it the distance. The decaying impact of a mission can be plotted against distance as follows:
 
 ```{r, echo = FALSE, out.width = "50%", fig.align = "center"}
 ggplot() +
@@ -695,7 +698,7 @@ ggplot() +
   theme(text = element_text(family = "Lato"))
 ```
 
-We can see that by using the Gaussian decay function, we can model something that is closer to a “cutoff.” Applying this function to the data gives the following map:
+We can see that by using the Gaussian decay function, we can model something that is closer to a “cutoff,” i.e., the decay happens much more abruptly. Applying this function to the data gives the following map:
 
 ```{r, echo = FALSE, out.width = "70%", fig.align = "center", dev = "png", dpi = 300}
 tm_shape(mutate(spli, distmissx = exp(-(distmiss^2)/(2*100^2)))) + 
