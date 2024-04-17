@@ -1,0 +1,1 @@
+This repository contains work on the assignments in the Spatial Economics course at WU, Summer Term 2024. Code and output for the individual assignments are found in the individual assignments folders.
