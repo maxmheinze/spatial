@@ -49,6 +49,20 @@ Text
 
 # Task B
 
-Test
+## Task B.1 - Unit of Observation
+
+Describe the unit of observation:
+* subnational “cells” --> grid squares 
+* used to conduct a geographically disaggregated analysis of civil conflict and weather shocks
+
+What are their areas?
+* cells have dimensions of 110 km by 110 km (square)
+
+Why and to which (relative) extent do they differ?
+* spatial resolution?
+
+## Task B.2 - Un-normalized weights matrix
+
+
 
 \newpage
