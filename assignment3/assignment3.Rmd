@@ -43,7 +43,221 @@ showtext_auto()
 
 # Task A
 
-Text
+## Naïve Panel Model and Specification Search
+
+```{r load_packages, include = FALSE}
+pacman::p_load(
+  tidyverse,
+  plm,
+  readxl,
+  spdep,
+  splm,
+  geosphere,
+  igraph,
+  stargazer,
+  xtable
+)
+
+cigs <- read_excel("./assignment3/data/cigarettes/cigarette+2var.xls")
+
+cigw <- read_excel("./assignment3/data/cigarettes/Spat-Sym-US.xls", col_names = FALSE) %>%
+  as.matrix()
+```
+
+We begin by fitting the spatially naïve panel model using the `plm` function. The output is printed below.
+
+```{r fit_naive_panel}
+cm1 <- plm(logc ~ logp + logy, 
+           data = cigs,
+           effect = "twoway",
+           model = "within",
+           index = c("state", "year"))
+```
+
+```{r print_naive_panel, echo = FALSE, results = "asis"}
+cat("\\begin{center}")
+stargazer(cm1, header = FALSE, float = FALSE)
+cat("\\end{center}")
+```
+
+As the true spatial econometricians we are, we now ignore everything that is reminiscent of economic theory and venture on a standard specification testing path. We begin by performing a Lagrange Multiplier test for spatial lags in both the error and the dependent. The results are printed below.
+
+```{r set_up_w, include = FALSE}
+cign <- c("AL", "AZ", "AR", "CA", "CT", "DE", "DC", "FL", "GA", "ID", "IL", "IN", 
+            "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", 
+            "NE", "NV", "NH", "NJ", "NM", "NY", "ND", "OH", "OK", "PA", "RI", "SC", 
+            "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY")
+
+dimnames(cigw) <- list(cign, cign)
+rownames(cigw) <- cign
+cigm <- mat2listw(cigw, style = "W")
+```
+
+```{r specification_tests_1}
+slmtest(cm1, cigm, test = "lme")
+
+slmtest(cm1, cigm, test = "lml")
+```
+
+As we can see, both tests return significant $p$-values, meaning that we reject the null hypotheses of spatial dependence being present in the errors or the dependent, respectively. We thus continue by performing robust LM tests for spatial dependence in both the errors and the dependent which account for the respectively other type of spatial dependence potentially being present. The results of these two tests are printed below.
+
+```{r specification_tests_2}
+slmtest(cm1, cigm, test = "rlme")
+
+slmtest(cm1, cigm, test = "rlml")
+
+```
+
+Since this time, testing for spatial dependence in the error given spatial dependence in the dependent returns a significant result, and testing for spatial dependence in the dependent given spatial dependence in the errors does not, we conclude that based on these test results, a **SEM model** is the most appropriate specification.
+
+## Estimating a SEM Model and Comparing it to an SLX Model
+
+We use the `spml` function from the `splm` package to estimate a spatial panel model using Maximum Likelihood. Consistent with our previous answer, we estimate a **SEM model**, and we do this by setting `lag = FALSE` as well as `spatial.error = "b"`. 
+
+```{r fit_sem}
+cm2 <- spml(
+  logc ~ logp + logy, 
+  data = cigs,
+  listw = cigm,
+  effect = "twoways",
+  model = "within",
+  index = c("state", "year"),
+  lag = FALSE,
+  spatial.error = "b"
+)
+```
+
+```{r store_summary, include = FALSE}
+cm2_summary <- summary(cm2)
+cm2_coefs <- cm2_summary$CoefTable[,1]
+cm2_serrs <- cm2_summary$CoefTable[,2]
+```
+
+The results of this estimation are printed in the following.
+
+\begin{center}
+\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{1}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-2} 
+\\[-1.8ex] & logc \\ 
+\hline \\[-1.8ex] 
+ logp & $-$1.004$^{***}$ \\ 
+  & (0.040) \\ 
+  & \\ 
+ logy & 0.554$^{***}$ \\ 
+  & (0.049) \\ 
+  & \\ \hline
+ Spatial error rho & 0.240$^{***}$ \\ 
+  & (0.033) \\ 
+  & \\ 
+\hline \\[-1.8ex] 
+Observations & 1,380 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{1}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{center} 
+
+
+Next, we estimate an **SLX model** using the `plm` function in combination with the `slag` function to create spatial lags. Since there neither is a lag of the dependent nor are there spatial errors, there is no need to use a function for a dedicatedly spatial panel model.
+
+```{r fit_slx}
+cm3 <- plm(
+  logc ~ logp + logy + slag(logp, listw = cigm) + slag(logy, listw = cigm), 
+  data = cigs,
+  effect = "twoways",
+  model = "within",
+  index = c("state", "year")
+)
+```
+
+Again, the results are printed below.
+
+```{r print_slx, echo = FALSE, results = "asis"}
+cat("\\begin{center}")
+stargazer(cm3, header = FALSE, float = FALSE)
+cat("\\end{center}")
+```
+
+
+
+## Distance Decay SLX
+
+```{r setup_distance_decay}
+cigd <- read_excel("./assignment3/data/cigarettes/cigar_states.xls") %>%
+  select(longitude, latitude) %>%
+  as.matrix() %>%
+  `rownames<-`(cign)
+
+cigi <- distm(cigd, fun = distVincentyEllipsoid)
+
+cigj <- (cigi/1000000)^(-3) %>%
+  `diag<-`(0) %>%
+  mat2listw(style = "B")
+```
+
+```{r fit_distance_decay_slx}
+cm4 <- plm(
+  logc ~ logp + logy + slag(logp, listw = cigj) + slag(logy, listw = cigj), #SLX w/ distance decay
+  data = cigs,
+  effect = "twoways",
+  model = "within",
+  index = c("state", "year")
+)
+```
+
+```{r print_distance_decay_slx, echo = FALSE, results = "asis"}
+cat("\\begin{center}")
+stargazer(cm3, header = FALSE, float = FALSE)
+cat("\\end{center}")
+```
+
+```{r setup_matrix, include = FALSE}
+cigk <- listw2mat(cigj) %>%
+  `rownames<-`(cign) %>%
+  `colnames<-`(cign)
+
+cigg <- graph_from_adjacency_matrix((cigk), mode = "undirected")
+```
+
+```{r plot_graph, fig.width = 7, fig.height = 5, out.width = "100%", fig.align="center"}
+plot(cigg,
+     vertex.size = 10, 
+     vertex.color = "#BBBBBB",
+     vertex.label.cex = 0.7, 
+     vertex.label.font = 2, 
+     vertex.label.family = "Lato",
+     vertex.label.color = "black",
+     edge.color = "black",
+     edge.width = 0.5,
+     asp = 0) 
+```
+
+```{r plot_heatmap, out.width="60%", fig.align="center"}
+heatmap(cigk, Rowv = NA, Colv = "Rowv")
+```
+
+```{r print_rowsums}
+rowSums(cigk) %>%
+  sort(decreasing = TRUE) %>%
+  knitr::kable(col.names = "Row Sum")
+```
+
+```{r print_eigenvector_centrality, echo = FALSE}
+eigen_centrality(
+  cigg,
+  directed = FALSE,
+  scale = TRUE,
+  weights = NULL,
+  options = arpack_defaults()
+) %>%
+  `$`(vector) %>%
+  sort(decreasing = TRUE) %>%
+  knitr::kable(col.names = "Eigenvector Centrality")
+```
+
 
 \newpage
 
