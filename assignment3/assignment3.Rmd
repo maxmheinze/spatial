@@ -18,6 +18,8 @@ header-includes:
   - \usepackage{graphicx}
   - \usepackage{booktabs}
   - \usepackage[default]{lato}
+  - \usepackage{bm}
+  - \usepackage{ulem}
 papersize: a4
 geometry: margin = 2cm
 urlcolor: DarkOrchid!65!black
@@ -112,7 +114,11 @@ Since this time, testing for spatial dependence in the error given spatial depen
 
 ## Estimating a SEM Model and Comparing it to an SLX Model
 
-We use the `spml` function from the `splm` package to estimate a spatial panel model using Maximum Likelihood. Consistent with our previous answer, we estimate a **SEM model**, and we do this by setting `lag = FALSE` as well as `spatial.error = "b"`. 
+We use the `spml` function from the `splm` package to estimate a spatial panel model using Maximum Likelihood. Consistent with our previous answer, we estimate a **SEM model**, and we do this by setting `lag = FALSE` as well as `spatial.error = "b"`. Written down, the model equation is identical to the one presented in the assignment question, except for the important distinction that
+
+$$
+\bm{\varepsilon} = \rho\bm{W\varepsilon} + \bm{u},\quad\bm{u}\sim\mathrm{N}(\bm{0},\sigma^2\bm{I}).
+$$
 
 ```{r fit_sem}
 cm2 <- spml(
@@ -161,7 +167,13 @@ Observations & 1,380 \\
 \end{center} 
 
 
-Next, we estimate an **SLX model** using the `plm` function in combination with the `slag` function to create spatial lags. Since there neither is a lag of the dependent nor are there spatial errors, there is no need to use a function for a dedicatedly spatial panel model.
+Next, we estimate an **SLX model** using the `plm` function in combination with the `slag` function to create spatial lags. Since there neither is a lag of the dependent nor are there spatial errors, there is no need to use a function for a dedicatedly spatial panel model. The model we estimate below amounts to
+
+$$
+\bm{y}_t = \bm{X}_t\bm{\beta} + \bm{WX}_t\bm{\gamma} + \bm{\mu} + \phi_t\bm{\iota} + \bm{\varepsilon}_t,
+$$
+
+where, diverting from the original notation for ease of reading, $\bm{y}_t $ is a $n\times 1$ vector of stacked $\mathrm{log}(C_{it})$, $\bm{X}_t$ is a $n \times 2$ matrix consisting of stacked $\mathrm{log}(P_{it})$ and $\mathrm{log}(I_{it})$ as columns, $\bm{W}$ is the provided weights matrix, $\bm{\beta} = (\beta_1, \beta_2)'$, $\bm{\gamma} = (\gamma_1, \gamma_2)'$, and both $\bm{\mu}$ and $\bm{\varepsilon}$ are stacked over individuals and thus $n\times 1$ vectors.
 
 ```{r fit_slx}
 cm3 <- plm(
@@ -181,9 +193,15 @@ stargazer(cm3, header = FALSE, float = FALSE)
 cat("\\end{center}")
 ```
 
+We can see that there is positive spatial autocorrelation of errors in the SEM model, and a negative spillover effect of price changes in the SLX model. The **positive spatial autocorrelation of errors** can be interpreted as that states that are contiguous are likely to experience similar shocks. This can be explained as spillover effects of an unobserved variable affecting cigarette demand; however, it is not possible to deduce information about the spillover effect of price changes, one of the explanatory variables in the model, from this error autocorrelation.
 
+In contrast, the SLX model allows for directly examining and interpreting spillover effects, which could be the rationale for choosing it over the SEM (or a SAR) model. The coefficient we receive for **the effect of adjacent states' price changes**, $\gamma_1$, is $-$0.220. This can directly be interpreted as that given a one-unit increase in log price of cigarettes, log demand in adjacent states decreases by an average of 0.22 (or, if you want to be imprecise, the price of cigarettes increasing by one percent is associated with demand in adjacent states decreasing by an average of 0.22 percent), ceteris paribus.
+
+Of course, this is really weird, or should at least strike us as such if we hold any belief in our original bootlegging hypothesis of people traveling to other states if cigarettes are cheaper there. This is because the above mentioned result indicates the exact opposite, i.e., if the price of cigarettes in State A increases, _less_ people will demand cigarettes in neighboring State B, where the price has _not_ increased.
 
 ## Distance Decay SLX
+
+Since we know that results depend quite strongly on our choice of $\bm{W}$, it makes sense that \textcite{halleckvega2015} try a different $\bm{W}$ and we are asked to follow after them. So, in the following, we estimate an **SLX model with a distance decay specification**, where $w_{ij} = d_{ij}^{-\gamma}$ and $\gamma = 3$.
 
 ```{r setup_distance_decay}
 cigd <- read_excel("./assignment3/data/cigarettes/cigar_states.xls") %>%
@@ -208,11 +226,17 @@ cm4 <- plm(
 )
 ```
 
+Again, the model results are printed below.
+
 ```{r print_distance_decay_slx, echo = FALSE, results = "asis"}
 cat("\\begin{center}")
-stargazer(cm3, header = FALSE, float = FALSE)
+stargazer(cm4, header = FALSE, float = FALSE)
 cat("\\end{center}")
 ```
+
+We can see that this time, we actually get the suspected bootlegging effect, as $\gamma_1$ is positive. This may indicate that \sout{you get your desired results if you just try a large enough number of specifications} the distance decay matrix fits the true DGP better.
+
+Regarding the network, XXX
 
 ```{r setup_matrix, include = FALSE}
 cigk <- listw2mat(cigj) %>%
