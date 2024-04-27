@@ -25,11 +25,6 @@ library("spatialreg")
 library("dplyr")
 library("ggplot2")
 
-dir.create("spatial_unit3")
-setwd("spatial_unit3")
-
-dir.create("code")
-dir.create("data")
 
 
 # Illustrating Bias of OLS under SAR DGP ----------------------------------
