@@ -298,6 +298,7 @@ What are their areas?
 
 Why and to which (relative) extent do they differ?
 * spatial resolution?
+* In the Online appendix they also mention " We also compute the area, in squared kilometers, of each cell corresponding to land (i.e. excluding sea or lakes)."
 
 ## Task B.2 - Un-normalized weights matrix
 
