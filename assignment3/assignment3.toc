@@ -1,0 +1,7 @@
+\contentsline {section}{Task A}{2}{section*.2}%
+\contentsline {subsection}{Naïve Panel Model and Specification Search}{2}{section*.3}%
+\contentsline {subsection}{Estimating a SEM Model and Comparing it to an SLX Model}{3}{section*.4}%
+\contentsline {subsection}{Distance Decay SLX}{4}{section*.5}%
+\contentsline {section}{Task B}{9}{section*.6}%
+\contentsline {subsection}{Task B.1 - Unit of Observation}{9}{section*.7}%
+\contentsline {subsection}{Task B.2 - Un-normalized weights matrix}{9}{section*.8}%
