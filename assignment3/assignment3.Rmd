@@ -264,18 +264,19 @@ plot(cigg,
 
 Since the plot is constructed anew every time we compile the document, we do not know how exactly it looks in our final submission. However, it should always resemble the true spatial position of the states recognizably---it may be flipped, it may be mirrored, it may not have north at the top, but the result should resemble the continental United States.
 
-Then we thought about printing the weights matrix, only to find out that this is all but impossible on an A4 sheet of paper. So instead, here is a heatmap of the matrix:
+Then we thought about printing the weights matrix, only to find out that this is all but impossible on an A4 sheet of paper. So instead, here is a heatmap of the matrix (with logged values so that the scale appears more clearly):
 
-```{r plot_heatmap, echo = FALSE, out.width="100%", fig.align="center"}
+```{r plot_heatmap, echo = FALSE, fig.width = 7, fig.height = 7, out.width="100%", fig.align="center"}
 cigk_melted <- melt(cigk)
 
-# Create the ggplot heatmap
 ggplot(cigk_melted, aes(x = Var1, y = Var2, fill = log(value))) +
-  geom_tile() +  # This creates the tiles for the heatmap
-  scale_fill_viridis(name = "Value", option = "D") +  # Use viridis color scale
-  theme_minimal() +  # Clean theme
-  xlab("Column") +  # X-axis label
-  ylab("Row")    # Y-axis label
+  geom_tile() +  
+  scale_fill_viridis(name = expression("log of " * w[ij]), option = "D") +
+  labs(title = "Spatial Weights Matrix Heatmap", x = "", y = "") +
+  scale_y_discrete(limits=rev) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90),
+        text = element_text(family = "Lato"))
 ```
 
 Regarding centrality, we calculated two well-known measures: row sums (since our $\bm{W}$ is not row-stochastic) and eigenvector centrality. The results are printed below.
@@ -309,7 +310,17 @@ $$
 
 The **spillover effect** we are interested in is described by $\gamma_1$, which in the equation is pre-multiplied by the first column of $\bm{WX}_t$. In a sense, the first column of $\bm{WX}_t$ determines where, or how strongly, spillover effects arise. Given a one-unit increase in every state's $\mathrm{log}(P_{it})$, this means that spillover effects of state $i$ on state $j$ will arise where $w_{ij}$ is large. For an illustration, you can thus refer to the heatmap above.
 
-The **average partial effect** of increasing income
+The **average partial effect** is the effect that a (say, one-unit) change in an explanatory variable exerts on the dependent, averaged across all units. In a normal regression setting without spatial lags, this would be represented by the coefficient $\bm{\beta}$, which is constant over all $i$. However, in this case, changing the log income vector by one unit for all states $i$ would exert influence over the demand for cigarettes via two channels: the “direct” channel, represented by the parameter $\beta_2$, and the “indirect” channel, represented by $\gamma_2$ times the $i$-th row of $\bm{W}$. The partial effect of a one-unit change in $\mathrm{log}(I_{it})$ for a certain $i$ is thus
+
+$$
+\mathrm{PE}_i = \beta_2 + \gamma_2 \sum_j w_{ij},
+$$
+
+and the average partial effect of a one-unit change in $\mathrm{log}(I_{it})$ is then
+
+$$
+\mathrm{APE} = \beta_2 + \gamma_2 n^{-1}\sum_i \sum_j w_{ij}.
+$$
 
 \newpage
 
