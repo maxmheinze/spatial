@@ -57,7 +57,10 @@ pacman::p_load(
   geosphere,
   igraph,
   stargazer,
-  xtable
+  xtable,
+  ggplot2,
+  reshape2,
+  viridis
 )
 
 cigs <- read_excel("./assignment3/data/cigarettes/cigarette+2var.xls")
@@ -173,7 +176,7 @@ $$
 \bm{y}_t = \bm{X}_t\bm{\beta} + \bm{WX}_t\bm{\gamma} + \bm{\mu} + \phi_t\bm{\iota} + \bm{\varepsilon}_t,
 $$
 
-where, diverting from the original notation for ease of reading, $\bm{y}_t $ is a $n\times 1$ vector of stacked $\mathrm{log}(C_{it})$, $\bm{X}_t$ is a $n \times 2$ matrix consisting of stacked $\mathrm{log}(P_{it})$ and $\mathrm{log}(I_{it})$ as columns, $\bm{W}$ is the provided weights matrix, $\bm{\beta} = (\beta_1, \beta_2)'$, $\bm{\gamma} = (\gamma_1, \gamma_2)'$, and both $\bm{\mu}$ and $\bm{\varepsilon}$ are stacked over individuals and thus $n\times 1$ vectors.
+where, diverting from the original notation for ease of reading, $\bm{y}_t$ is a $n\times 1$ vector of stacked $\mathrm{log}(C_{it})$, $\bm{X}_t$ is a $n \times 2$ matrix consisting of stacked $\mathrm{log}(P_{it})$ and $\mathrm{log}(I_{it})$ as columns, $\bm{W}$ is the provided weights matrix, $\bm{\beta} = (\beta_1, \beta_2)'$, $\bm{\gamma} = (\gamma_1, \gamma_2)'$, and both $\bm{\mu}$ and $\bm{\varepsilon}$ are stacked over individuals and thus $n\times 1$ vectors.
 
 ```{r fit_slx}
 cm3 <- plm(
@@ -236,7 +239,7 @@ cat("\\end{center}")
 
 We can see that this time, we actually get the suspected bootlegging effect, as $\gamma_1$ is positive. This may indicate that \sout{you get your desired results if you just try a large enough number of specifications} the distance decay matrix fits the true DGP better.
 
-Regarding the network, XXX
+From a network perspective, this distance decay matrix has interesting implications. Our idea was that if there is a large number of edges, and these edges are weighted by the inverse of a power of the distance, then plotting these network must yield something that vaguely looks like the U.S. And it actually did:
 
 ```{r setup_matrix, include = FALSE}
 cigk <- listw2mat(cigj) %>%
@@ -259,9 +262,23 @@ plot(cigg,
      asp = 0) 
 ```
 
-```{r plot_heatmap, out.width="60%", fig.align="center"}
-heatmap(cigk, Rowv = NA, Colv = "Rowv")
+Since the plot is constructed anew every time we compile the document, we do not know how exactly it looks in our final submission. However, it should always resemble the true spatial position of the states recognizably---it may be flipped, it may be mirrored, it may not have north at the top, but the result should resemble the continental United States.
+
+Then we thought about printing the weights matrix, only to find out that this is all but impossible on an A4 sheet of paper. So instead, here is a heatmap of the matrix:
+
+```{r plot_heatmap, echo = FALSE, out.width="100%", fig.align="center"}
+cigk_melted <- melt(cigk)
+
+# Create the ggplot heatmap
+ggplot(cigk_melted, aes(x = Var1, y = Var2, fill = log(value))) +
+  geom_tile() +  # This creates the tiles for the heatmap
+  scale_fill_viridis(name = "Value", option = "D") +  # Use viridis color scale
+  theme_minimal() +  # Clean theme
+  xlab("Column") +  # X-axis label
+  ylab("Row")    # Y-axis label
 ```
+
+Regarding centrality, we calculated two well-known measures: row sums (since our $\bm{W}$ is not row-stochastic) and eigenvector centrality. The results are printed below.
 
 ```{r print_rowsums}
 rowSums(cigk) %>%
@@ -282,6 +299,17 @@ eigen_centrality(
   knitr::kable(col.names = "Eigenvector Centrality")
 ```
 
+Using both measures of centrality, Maryland is the most central state, followed by DC as the second-most central entity. The then following positions differ a bit between the two measures of centrality.
+
+Regarding the question where spillover effects occur, let us take another look at the model equation of the SLX model:
+
+$$
+\bm{y}_t = \bm{X}_t\bm{\beta} + \bm{WX}_t\bm{\gamma} + \bm{\mu} + \phi_t\bm{\iota} + \bm{\varepsilon}_t,
+$$
+
+The **spillover effect** we are interested in is described by $\gamma_1$, which in the equation is pre-multiplied by the first column of $\bm{WX}_t$. In a sense, the first column of $\bm{WX}_t$ determines where, or how strongly, spillover effects arise. Given a one-unit increase in every state's $\mathrm{log}(P_{it})$, this means that spillover effects of state $i$ on state $j$ will arise where $w_{ij}$ is large. For an illustration, you can thus refer to the heatmap above.
+
+The **average partial effect** of increasing income
 
 \newpage
 
