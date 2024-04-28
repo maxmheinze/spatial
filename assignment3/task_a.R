@@ -97,13 +97,16 @@ cigk <- listw2mat(cigj) %>%
 
 cigg <- graph_from_adjacency_matrix((cigk), mode = "undirected")
 
-cigk
+cigk %>%
+  round(2)
 
 plot(cigg)
 
 heatmap(cigk, Rowv = NA, Colv = "Rowv")
 
-rowSums(cigk)
+rowSums(cigk) %>%
+  sort(decreasing = TRUE) %>%
+  knitr::kable(col.names = "Row Sum")
 
 eigen_centrality(
   cigg,
