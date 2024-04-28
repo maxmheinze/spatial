@@ -5,15 +5,15 @@
 library(pacman)
 p_load(
   haven,
-  dplyr,
   sf,
-  tmap,
   data.table,
-  viridis,
   tidyverse,
+  dplyr,
   stargazer,
   SDPDmod,
-  spatialreg
+  spatialreg,
+  spdep,
+  units
 )
 
 # LOADING DATA -----------------------------------------------------------------
@@ -38,35 +38,46 @@ df <- merge(geoconflict_main, raster, by = c("_ID", "lat", "lon")) %>%
          country_ = as.factor(country_),
          cell = as.factor(cell))
 
-#Number of observations is still not correct! They have 35042
+## Number of observations is still not correct! They have 35042
 colSums(subset(geoconflict_main, select = 73:120) == 1)
 
 # REPLICATION TABLE 2 ----------------------------------------------------------
-# Model 1
-model_1a <- lm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
+## Model 1
+model_1 <- lm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg + 
                  elevation_cell + rough_cell + area_cell + use_primary + 
                  dis_river_cell + shared + border + any_mineral + ELF +
                  year_ + country_, data = df)
-summary(model_1a)
+summary(model_1)
 
-#Model 2
+## Model 2
 # From equation 2: include all W*controls and W*country FE!
 df_alternative <- df %>% 
-  select(c(2,7:15,20,46:51,58:117, 119:163))
-model_1b <- lm(ANY_EVENT_ACLED ~. , data = df_alternative)
-summary(model_1b)
+  select(c(2, 7:15, 20, 46:51, 58:117, 119:163))
+model_2 <- lm(ANY_EVENT_ACLED ~. , data = df_alternative)
+summary(model_2)
 
-#Model 3
-W <- mOrdNbr(raster, m =1)
+## Model 3
+contiguity_matrix <- mOrdNbr(raster, m =1)
+
+## Setting a 180 km cutoff
+dist_matrix <- st_distance(df$geometry)
+dist_threshold <- set_units(180000, "m")
+dist_threshold_matrix <- ifelse(dist_matrix > dist_threshold, 0, 1)
+
+# Remove diagonal elements
+diag(dist_threshold_matrix) <- 0
+
+binary_matrix <- contiguity_matrix * dist_threshold_matrix
 
 # Dynamic spatial Durbin model with spatial and time fixed effects (with Lee-Yu transformation)
-# Example:
-# mod5<-SDPDm(formula = logc ~ logp+logy, data = data1, W = W,
-#             index = c("state","year"),
-#             model = "sdm", 
-#             effect = "twoways",
-#             LYtrans = T,
-#             dynamic = T,
-#             tlaginfo = list(ind = NULL, tl = T, stl = T))
-# summary(mod5)
+model_3 <- SDPDm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg + 
+                  elevation_cell + rough_cell + area_cell + use_primary + 
+                  dis_river_cell + shared + border + any_mineral + ELF,
+                W = binary_matrix,
+                data = df,
+                dynamic = TRUE,
+                index = c("country_", "year_"),
+                model = "sdm")
+summary(model_3)
