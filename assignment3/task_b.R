@@ -6,6 +6,7 @@ library(pacman)
 p_load(
   haven,
   sf,
+  sp,
   data.table,
   tidyverse,
   dplyr,
@@ -60,8 +61,12 @@ summary(model_2)
 ## Model 3
 contiguity_matrix <- mOrdNbr(raster, m =1)
 
+# queen_nb <- poly2nb(raster, row.names=raster$"_ID", queen=TRUE)
+# B.list.queen <- nb2listw(queen_nb, style = "B", zero.policy=TRUE)
+# B.queen <- listw2mat(B.list.queen)
+
 ## Setting a 180 km cutoff
-dist_matrix <- st_distance(df$geometry)
+dist_matrix <- st_distance(raster)
 dist_threshold <- set_units(180000, "m")
 dist_threshold_matrix <- ifelse(dist_matrix > dist_threshold, 0, 1)
 
@@ -69,6 +74,8 @@ dist_threshold_matrix <- ifelse(dist_matrix > dist_threshold, 0, 1)
 diag(dist_threshold_matrix) <- 0
 
 binary_matrix <- contiguity_matrix * dist_threshold_matrix
+
+#distw <- dnearneigh(st_coordinates(st_centroid(raster)), 0, 180000, row.names=raster$"_ID")
 
 # Dynamic spatial Durbin model with spatial and time fixed effects (with Lee-Yu transformation)
 model_3 <- SDPDm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
