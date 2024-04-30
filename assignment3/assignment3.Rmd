@@ -347,6 +347,10 @@ The weights matrix *W* used in the paper is a binary contiguity matrix, which is
 
 The spatial econometric model thus captures the total influence of those units that are considered neighboring, whereby each coefficient of a neighboring cell with a change can be interpreted as the total additional effect of this one other neighboring cell. Therefore, the coefficients on spatially lagged variables show cumulative and not averaged effects of changes in neighboring cells. In contrast, a normalized weights matrix (more precisely, a row-normalized weights matrix) shows the average influence of all neighbors. The coefficients for spatial lags can thus be interpreted directly as the effects of a change in a neighbor on the dependent variable in the cell of interest, and hence the authors' decision to use the chosen matrix *W* for simplicity reasons. Specifically, the coefficient for spatially lagged variables gives a direct interpretation for the effect on the cell of interest of a change in, say, conflict frequency or weather shocks in one or more neighboring cells. 
 
+What is also important to mention is that this un-weighted weights matrix tends to be sensitive to the number of identified neighbors. The cumulative influence of neighboring cells can potentially be more significant and the coefficients larger if the cell of interest has a higher number neighbors (more neighbors means higher cumulative influence, which then says very little about the average effect of a change in a neighbor). However, since the weights matrix *W* is binary (no further weighting) and most cells have exactly 8 neighbors (with the exception of border cells) as well as the fact that the average number of neighbors is quite close to the 8 neighbors at 7.4, this possible distortion due to different numbers of neighbors is moderate, a comparison of the cells is largely possible or the issue only needs to be taken into account, if at all, when a comparison is made with border cells. 
+
+
+
 
 
 
