@@ -332,21 +332,15 @@ The unit of observation is defined in the paper at a sub-national level in Afric
 
 ### What are their areas?
 
-Each of these subnational cells has a resolution of 1 degree latitude $\times$ 1 degree longitude (which corresponds to about 110 km $\times$ 110 km at the equator, see also the next point on relative differences in sizes of the cells). The validation of the resolution (1 degree resolution) is carried out by the authors through a robustness analysis with higher and lower spatial scales, in which they look at both a higher resolution 0.5 $\times$ 0.5 degree grid as well as a lower resolution with a 2 $\times$2 grid in addition to the chosen 1 degree resolution. The aim is to find a good balance between the degree of localization of agricultural shocks and the detection of the extent of conflict spillovers. As can be seen from the online appendix, and what is interesting for the interpretation of the area of the units of obersvations, the authors in their analysis also calculate the area of each cell in square kilometers corresponding to the land, excluding seas and lakes. Furthermore, cell-level controls such as elevation or roughness are also taken into account. 
+Each of these subnational cells has a resolution of 1 degree latitude $\times$ 1 degree longitude (which corresponds to about 110 km $\times$ 110 km at the equator, see also the next point on relative differences in sizes of the cells). The validation of the resolution (1 degree resolution) is carried out by the authors through a robustness analysis with higher and lower spatial scales, in which they look at both a higher resolution 0.5 $\times$ 0.5 degree grid as well as a lower resolution with a 2 $\times$2 grid in addition to the chosen 1 degree resolution. The aim is to find a good balance between the degree of localization of agricultural shocks and the detection of the extent of conflict spillovers. As can be seen from the online appendix, and what is interesting for the interpretation of the area of the units of observations, the authors in their analysis also calculate the area of each cell in square kilometers corresponding to the land, excluding seas and lakes. Furthermore, cell-level controls such as elevation or roughness are also taken into account. 
 
 ### Why and to which (relative) extent do they differ?
 
+One possible reason for potential relative differences in the areas of each cell is the spherical shape of the Earth. Since the earth is a sphere and not a two-dimensional surface, a 1 $\times$ 1-degree grid cell does not correspond to an area of 110 km $\times$ 110 km everywhere on the globe. As the Earth is a sphere, the longitudes converge at the poles. The horizontal distance (from East to West, the width of a cell) from one longitude to the next longitude becomes smaller the further you move from the equator to the poles (to the North or South). However, the distance between the lines of latitude, which run parallel, remains roughly constant across the globe. So while around the equator a 1 degree $\times$ 1 degree cell area has about 12100 squared kilometers (110 km $\times$ 110 km), the area of a 1 degree $\times$ 1 degree cell deviates and decreases the further you move towards the poles (as the east-west distance of the cell decreases). As the equator runs through Africa, the areas of 1 $\times$ 1 degree cells in Central Africa are larger than those in North and South Africa (as these cells are not located on the equator but located further towards the poles, where eventually the width of a cell would converge to zero).
 
-Describe the unit of observation:
-* subnational “cells” --> grid squares 
-* used to conduct a geographically disaggregated analysis of civil conflict and weather shocks
+Furthermore, the area of each cell taken into account in the analysis in squared kilometers, which corresponds to the land (and thus excludes seas and lakes), depends on the occurrences or the proportion of standing or flowing waters in a cell. The presence of roughness, hills, or mountains can also influence the area surface. The areas can therefore differ depending on the nature and environmental factors present in a cell. The area of a 110 km $times$ 110 km square can also vary depending on the map and projection used. This is because distances and areas can deviate according to the projection used.
 
-What are their areas?
-* cells have dimensions of 110 km by 110 km (square)
 
-Why and to which (relative) extent do they differ?
-* spatial resolution?
-* In the Online appendix they also mention " We also compute the area, in squared kilometers, of each cell corresponding to land (i.e. excluding sea or lakes)."
 
 ## Task B.2 - Un-normalized weights matrix
 
