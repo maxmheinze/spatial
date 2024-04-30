@@ -326,7 +326,16 @@ $$
 
 # Task B
 
-## Task B.1 - Unit of Observation
+## Describe the Unit of Observation
+
+The unit of observation is defined in the paper at a sub-national level in Africa. This involves gridded data / grid cells as the unit of observation, leaving the authors with each single cell as one unit of observation. Each of these cells within the grid system represents a certain area on the African map. For the analysis, a panel data set is used that comprises around 2700 cells in 46 African countries from 1997 to 2011, including numerous geo-referenced covariates. Within the units of observation (cells), different types of data are aggregated (conflict data, climate data, as well as supplementary data on infrastructure and ethnic fractionalization, to give just a few examples). 
+
+### What are their areas?
+
+Each of these subnational cells has a resolution of 1 degree latitude $\times$ 1 degree longitude (which corresponds to about 110 km $\times$ 110 km at the equator, see also the next point on relative differences in sizes of the cells). The validation of the resolution (1 degree resolution) is carried out by the authors through a robustness analysis with higher and lower spatial scales, in which they look at both a higher resolution 0.5 $\times$ 0.5 degree grid as well as a lower resolution with a 2 $\times$2 grid in addition to the chosen 1 degree resolution. The aim is to find a good balance between the degree of localization of agricultural shocks and the detection of the extent of conflict spillovers. As can be seen from the online appendix, and what is interesting for the interpretation of the area of the units of obersvations, the authors in their analysis also calculate the area of each cell in square kilometers corresponding to the land, excluding seas and lakes. Furthermore, cell-level controls such as elevation or roughness are also taken into account. 
+
+### Why and to which (relative) extent do they differ?
+
 
 Describe the unit of observation:
 * subnational “cells” --> grid squares 
