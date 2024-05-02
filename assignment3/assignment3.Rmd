@@ -322,6 +322,11 @@ $$
 \mathrm{APE} = \beta_2 + \gamma_2 n^{-1}\sum_i \sum_j w_{ij}.
 $$
 
+## Bonus question
+
+
+
+
 \newpage
 
 # Task B

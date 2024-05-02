@@ -118,3 +118,9 @@ eigen_centrality(
   `$`(vector) %>%
   sort(decreasing = TRUE)
 
+
+# Bonus question
+
+install.packages("bsreg")
+library(bsreg)
+
