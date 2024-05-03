@@ -3,5 +3,7 @@
 \contentsline {subsection}{Estimating a SEM Model and Comparing it to an SLX Model}{3}{section*.4}%
 \contentsline {subsection}{Distance Decay SLX}{4}{section*.5}%
 \contentsline {section}{Task B}{9}{section*.6}%
-\contentsline {subsection}{Task B.1 - Unit of Observation}{9}{section*.7}%
-\contentsline {subsection}{Task B.2 - Un-normalized weights matrix}{9}{section*.8}%
+\contentsline {subsection}{Describe the Unit of Observation}{9}{section*.7}%
+\contentsline {subsubsection}{What are their areas?}{9}{section*.8}%
+\contentsline {subsubsection}{Why and to which (relative) extent do they differ?}{9}{section*.9}%
+\contentsline {subsection}{Un-normalized weights matrix and its effects on interpretations}{9}{section*.10}%
