@@ -72,7 +72,7 @@ dist_threshold_matrix <- ifelse(dist_matrix > dist_threshold, 0, 1)
 diag(dist_threshold_matrix) <- 0
 
 binary_matrix <- contiguity_matrix * dist_threshold_matrix
-W <- mat2listw(binary_matrix, style = "W")
+W <- mat2listw(binary_matrix, style = "B", zero.policy = TRUE) 
 #distw <- dnearneigh(st_coordinates(st_centroid(raster)), 0, 180000, row.names=raster$"_ID")
 
 model_3 <- spml(ANY_EVENT_ACLED ~ . - cell,
@@ -102,3 +102,60 @@ B.queen <- listw2mat(B.list.queen)
 
 rook_nb <- poly2nb(raster, row.names=raster$'_ID', queen=FALSE)
 plot(rook_nb, coords, add=TRUE, col="green", cex=0.5)
+
+coords <- st_coordinates(st_centroid(raster))
+distances <- st_distance(st_centroid(raster))
+max <- max(distances)
+find_neighbors_horizontal <- function(centroids, max_distance = max, lat_tolerance = 0.01) {
+  # Calculate distances once
+  distances <- st_distance(centroids)
+  
+  # Extract latitudes
+  latitudes <- st_coordinates(centroids)[,2]
+  
+  # Initialize neighbors list
+  neighbors_list <- vector("list", nrow(centroids))
+  
+  for (i in seq_len(nrow(centroids))) {
+    # Find points within the same latitude band and within distance
+    neighbor_ids <- which(abs(latitudes - latitudes[i]) < lat_tolerance & distances[i,] < set_units(max_distance, "meters"))
+    
+    # Exclude the point itself from its list of neighbors
+    neighbor_ids <- neighbor_ids[neighbor_ids != i]
+    
+    # Store neighbor ids
+    neighbors_list[[i]] <- as.integer(neighbor_ids)
+  }
+  
+  return(neighbors_list)
+}
+
+find_neighbors_vertical <- function(centroids, max_distance = max, lon_tolerance = 0.01) {
+  # Calculate distances once
+  distances <- st_distance(centroids)
+  
+  # Extract longitudes
+  longitudes <- st_coordinates(centroids)[,1]
+  
+  # Initialize neighbors list
+  neighbors_list <- vector("list", nrow(centroids))
+  
+  for (i in seq_len(nrow(centroids))) {
+    # Find points within the same longitude band and within distance
+    neighbor_ids <- which(abs(longitudes - longitudes[i]) < lon_tolerance & distances[i,] < set_units(max_distance, "meters"))
+    
+    # Exclude the point itself from its list of neighbors
+    neighbor_ids <- neighbor_ids[neighbor_ids != i]
+    
+    # Store neighbor ids
+    neighbors_list[[i]] <- as.integer(neighbor_ids)
+  }
+  
+  return(neighbors_list)
+}
+
+# Apply the functions   
+neighbors_vertical <- find_neighbors_vertical(raster)
+neighbors_horizontal <- find_neighbors_horizontal(raster)
+plot(st_geometry(raster))
+plot(neighbors_vertical, coords, add=TRUE, col="red", cex=0.5)
