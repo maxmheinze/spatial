@@ -121,6 +121,66 @@ eigen_centrality(
 
 # Bonus question
 
-install.packages("bsreg")
+#install.packages("bsreg")
 library(bsreg)
 
+y <- cbind(logc = cigs$logc)
+X <- model.matrix(logc ~ logp + logy + year + state, data = cigs)
+X_lag <- X[, c("logp", "logy")]
+colnames(X_lag) <- c("wlogp", "wlogy")
+
+n_time <- length(unique(cigs$year))
+W_cont <- kronecker(diag(n_time), cigw / rowSums(cigw))
+
+
+dist <- as.matrix(dist(cigd))
+diag(dist) <- Inf # Diagonal elements will be 0
+
+Psi <- function(delta) {
+  W_dist <- dist ^ (-delta) # Build
+  W_dist <- W_dist / max(eigen(W_dist, symmetric = TRUE)$values) # Scale
+  kronecker(diag(n_time), W_dist)
+}
+
+X_cont <- W_cont %*% X_lag
+
+#######################################################################
+#######################################################################
+#######################################################################
+
+
+# Connectivities ---
+n_time <- length(unique(cigs$year))
+# Contiguity matrix
+W_cont <- kronecker(diag(n_time), cigw / rowSums(cigw))
+# Inverse-distance decay function
+dist <- as.matrix(dist(cigd))
+diag(dist) <- Inf # Diagonal elements will be 0
+Psi <- function(delta) {
+  W_dist <- dist ^ (-delta) # Build
+  W_dist <- W_dist / max(eigen(W_dist, symmetric = TRUE)$values) # Scale
+  kronecker(diag(n_time), W_dist)
+}
+W_dist <- Psi(3)
+
+# Prepare variables ---
+y <- cbind(logc = cigs$logc)
+X <- model.matrix(logc ~ logp + logy + year + state, data = cigs)
+X_lag <- X[, c("logp", "logy")]
+colnames(X_lag) <- c("wlogp", "wlogy")
+X_cont <- W_cont %*% X_lag
+
+n_save <- 50L
+n_burn <- 10L
+
+out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
+                  n_save = n_save, n_burn = n_burn, options = set_options(
+                    SLX = set_SLX(delta = 3, delta_scale = 0.05, delta_a = 2, delta_b = 2)))
+summary(out_slxdx)
+
+
+d_te <- rbind(
+  as_tibble(out_slxdx$draws) %>% transmute(model = "SLX(delta)", delta = delta_SLX)
+)
+
+mean(d_te$delta)
