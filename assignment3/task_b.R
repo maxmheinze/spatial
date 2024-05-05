@@ -14,7 +14,8 @@ p_load(
   SDPDmod,
   spatialreg,
   spdep,
-  units
+  units,
+  splm
 )
 
 # LOADING DATA -----------------------------------------------------------------
@@ -30,17 +31,14 @@ raster <- raster_Africa %>%
           lat = latitude_m)
 
 df <- merge(geoconflict_main, raster, by = c("_ID", "lat", "lon")) %>% 
-  filter(!(country_largest_share %in% c("Western Sahara", "Gambia"))) %>% #these countries are not listed in the online appendix
-  select(-c("ctry_18", "ctry_46", "W_ctry_18", "W_ctry_46")) %>%  #corresponding dummy columns - not sure is needed
+  #filter(!(country_largest_share %in% c("Western Sahara", "Gambia"))) %>% #these countries are not listed in the online appendix
+  filter(!(year == 1997)) %>%
   rename(year_ = year,
          country_ = country_largest_share) %>% 
   mutate(year_ = as.factor(year_),
          country_ = gsub(" ", "_", country_),
          country_ = as.factor(country_),
          cell = as.factor(cell))
-
-## Number of observations is still not correct! They have 35042
-colSums(subset(geoconflict_main, select = 73:120) == 1)
 
 # REPLICATION TABLE 2 ----------------------------------------------------------
 ## Model 1
@@ -54,8 +52,8 @@ summary(model_1)
 ## Model 2
 # From equation 2: include all W*controls and W*country FE!
 df_alternative <- df %>% 
-  select(c(2, 7:15, 20, 46:51, 58:117, 119:163))
-model_2 <- lm(ANY_EVENT_ACLED ~. , data = df_alternative)
+  select(c(4,5, 7:15, 20, 46:51, 58:119, 121:167))
+model_2 <- lm(ANY_EVENT_ACLED ~ . - cell , data = df_alternative)
 summary(model_2)
 
 ## Model 3
@@ -74,17 +72,33 @@ dist_threshold_matrix <- ifelse(dist_matrix > dist_threshold, 0, 1)
 diag(dist_threshold_matrix) <- 0
 
 binary_matrix <- contiguity_matrix * dist_threshold_matrix
-
+W <- mat2listw(binary_matrix, style = "W")
 #distw <- dnearneigh(st_coordinates(st_centroid(raster)), 0, 180000, row.names=raster$"_ID")
 
-# Dynamic spatial Durbin model with spatial and time fixed effects (with Lee-Yu transformation)
-model_3 <- SDPDm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
-                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg + 
-                  elevation_cell + rough_cell + area_cell + use_primary + 
-                  dis_river_cell + shared + border + any_mineral + ELF,
-                W = binary_matrix,
-                data = df,
-                dynamic = TRUE,
-                index = c("country_", "year_"),
-                model = "sdm")
+model_3 <- spml(ANY_EVENT_ACLED ~ . - cell,
+             data = df_alternative,
+             index=c("cell","year_"),
+             listw = W,
+             model="pooling",
+             lag=TRUE)
 summary(model_3)
+
+## Model 4
+model_4 <- spml(ANY_EVENT_ACLED ~ . + country_:year_ - year_ - country_ - cell,
+                data = df_alternative,
+                listw = W,
+                model="pooling",
+                lag=TRUE)
+summary(model_4)
+
+# VERTICAL HORIZONTAL CONTIGUITY -----------------------------------------------
+plot(st_geometry(raster))
+coords <- st_coordinates(st_centroid(raster))
+
+queen_nb <- poly2nb(raster, row.names=raster$"_ID", queen=TRUE)
+plot(queen_nb, coords, add=TRUE, col="red", cex=0.5)
+B.list.queen <- nb2listw(queen_nb, style = "B", zero.policy=TRUE)
+B.queen <- listw2mat(B.list.queen)
+
+rook_nb <- poly2nb(raster, row.names=raster$'_ID', queen=FALSE)
+plot(rook_nb, coords, add=TRUE, col="green", cex=0.5)
