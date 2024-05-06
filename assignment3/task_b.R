@@ -30,7 +30,7 @@ raster <- raster_Africa %>%
           lon = longitude_,
           lat = latitude_m)
 
-df <- merge(geoconflict_main, raster, by = c("_ID", "lat", "lon")) %>% 
+df_1 <- merge(geoconflict_main, raster, by = c("_ID", "lat", "lon")) %>% 
   #filter(!(country_largest_share %in% c("Western Sahara", "Gambia"))) %>% #these countries are not listed in the online appendix
   filter(!(year == 1997)) %>%
   rename(year_ = year,
@@ -50,10 +50,11 @@ model_1 <- lm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
 summary(model_1)
 
 ## Model 2
-# From equation 2: include all W*controls and W*country FE!
-df_alternative <- df %>% 
-  select(c(4,5, 7:15, 20, 46:51, 58:119, 121:167))
-model_2 <- lm(ANY_EVENT_ACLED ~ . - cell , data = df_alternative)
+## From equation 2: include all W*controls and W*country FE!
+df_2 <- df_1 %>% 
+  select(c(4,5, 7:15, 20, 46:51, 58:119, 121:167)) #I leave out one country (Zimbawe)
+
+model_2 <- lm(ANY_EVENT_ACLED ~ . - cell , data = df_2)
 summary(model_2)
 
 ## Model 3
@@ -68,24 +69,35 @@ dist_matrix <- st_distance(raster)
 dist_threshold <- set_units(180000, "m")
 dist_threshold_matrix <- ifelse(dist_matrix > dist_threshold, 0, 1)
 
-# Remove diagonal elements
+#distw <- dnearneigh(st_coordinates(st_centroid(raster)), 0, 180000, row.names=raster$"_ID")
+
+## Remove diagonal elements
 diag(dist_threshold_matrix) <- 0
 
 binary_matrix <- contiguity_matrix * dist_threshold_matrix
 W <- mat2listw(binary_matrix, style = "B", zero.policy = TRUE) 
-#distw <- dnearneigh(st_coordinates(st_centroid(raster)), 0, 180000, row.names=raster$"_ID")
 
 model_3 <- spml(ANY_EVENT_ACLED ~ . - cell,
-             data = df_alternative,
-             index=c("cell","year_"),
+             data = df_2,
+             index= "cell",
              listw = W,
              model="pooling",
              lag=TRUE)
 summary(model_3)
 
+model_3 <- SDPDm(ANY_EVENT_ACLED ~ . - cell,
+                data = df_2,
+                index= c("cell", "year_"),
+                W = binary_matrix,
+                model = "sdm",
+                effect = "twoways",
+                dynamic = TRUE)
+summary(model_3)
+
 ## Model 4
 model_4 <- spml(ANY_EVENT_ACLED ~ . + country_:year_ - year_ - country_ - cell,
-                data = df_alternative,
+                data = df_2,
+                index= "cell",
                 listw = W,
                 model="pooling",
                 lag=TRUE)
@@ -103,13 +115,8 @@ B.queen <- listw2mat(B.list.queen)
 rook_nb <- poly2nb(raster, row.names=raster$'_ID', queen=FALSE)
 plot(rook_nb, coords, add=TRUE, col="green", cex=0.5)
 
-coords <- st_coordinates(st_centroid(raster))
-distances <- st_distance(st_centroid(raster))
-max <- max(distances)
-find_neighbors_horizontal <- function(centroids, max_distance = max, lat_tolerance = 0.01) {
-  # Calculate distances once
-  distances <- st_distance(centroids)
-  
+neighbors_horizontal <- function(centroids) {
+
   # Extract latitudes
   latitudes <- st_coordinates(centroids)[,2]
   
@@ -118,7 +125,7 @@ find_neighbors_horizontal <- function(centroids, max_distance = max, lat_toleran
   
   for (i in seq_len(nrow(centroids))) {
     # Find points within the same latitude band and within distance
-    neighbor_ids <- which(abs(latitudes - latitudes[i]) < lat_tolerance & distances[i,] < set_units(max_distance, "meters"))
+    neighbor_ids <- latitudes == latitudes[i]
     
     # Exclude the point itself from its list of neighbors
     neighbor_ids <- neighbor_ids[neighbor_ids != i]
@@ -130,9 +137,7 @@ find_neighbors_horizontal <- function(centroids, max_distance = max, lat_toleran
   return(neighbors_list)
 }
 
-find_neighbors_vertical <- function(centroids, max_distance = max, lon_tolerance = 0.01) {
-  # Calculate distances once
-  distances <- st_distance(centroids)
+neighbors_vertical <- function(centroids) {
   
   # Extract longitudes
   longitudes <- st_coordinates(centroids)[,1]
@@ -142,7 +147,7 @@ find_neighbors_vertical <- function(centroids, max_distance = max, lon_tolerance
   
   for (i in seq_len(nrow(centroids))) {
     # Find points within the same longitude band and within distance
-    neighbor_ids <- which(abs(longitudes - longitudes[i]) < lon_tolerance & distances[i,] < set_units(max_distance, "meters"))
+    neighbor_ids <- which(longitudes - longitudes[i] == 0)
     
     # Exclude the point itself from its list of neighbors
     neighbor_ids <- neighbor_ids[neighbor_ids != i]
@@ -155,7 +160,34 @@ find_neighbors_vertical <- function(centroids, max_distance = max, lon_tolerance
 }
 
 # Apply the functions   
-neighbors_vertical <- find_neighbors_vertical(raster)
-neighbors_horizontal <- find_neighbors_horizontal(raster)
+vertical <- neighbors_vertical(raster)
+horizontal <- neighbors_horizontal(raster)
+
+# Number of elements
+n <- length(vertical)
+
+# Initialize an adjacency matrix with 0s
+adj_matrix_vertical <- matrix(0, nrow = n, ncol = n)
+adj_matrix_horizontal <- matrix(0, nrow = n, ncol = n)
+
+# Populate the adjacency matrix
+for (i in seq_len(n)) {
+  # Ensure indices are within the valid range
+  valid_indices_vertical <- vertical[[i]][vertical[[i]] <= n]
+  valid_indices_horizontal <- vertical[[i]][vertical[[i]] <= n]
+  
+  # Set matrix elements to 1
+  adj_matrix_vertical[i, valid_indices_vertical] <- 1
+  adj_matrix_horizontal[i, valid_indices_horizontal] <- 1
+}
+
+## Turn the matrices into listw objects
+vertical_listw <- mat2listw(adj_matrix_vertical, style = "B", zero.policy=TRUE)
+horizontal_listw <-mat2listw(adj_matrix_horizontal, style = "B", zero.policy=TRUE)
+
+'The horizontal contiguity matrix means that only cells which share the same latitude 
+are considered to be adjacent. Vertical contiguity means that only cells which share 
+the same longitude are considered adjacent.'
+
 plot(st_geometry(raster))
-plot(neighbors_vertical, coords, add=TRUE, col="red", cex=0.5)
+plot(horizontal_listw, coords, add=TRUE, col="green", cex=0.5)
