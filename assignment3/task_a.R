@@ -186,8 +186,16 @@ out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
 summary(out_slxdx)
 
 
-d_te <- rbind(
-  as_tibble(out_slxdx$draws) %>% transmute(model = "SLX(delta)", delta = delta_SLX)
+draws <- as_tibble(out_slxdx$draws) %>% 
+    transmute(delta = delta_SLX)
+
+delta_estimate <- mean(draws$delta)
+
+delta_table <- tibble(
+  Parameter = "Distance Decay (Delta)",
+  Estimate = delta_estimate
 )
 
-mean(d_te$delta)
+print(delta_table)
+
+
