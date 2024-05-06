@@ -124,58 +124,65 @@ eigen_centrality(
 #install.packages("bsreg")
 library(bsreg)
 
-y <- cbind(logc = cigs$logc)
-X <- model.matrix(logc ~ logp + logy + year + state, data = cigs)
-X_lag <- X[, c("logp", "logy")]
-colnames(X_lag) <- c("wlogp", "wlogy")
-
-n_time <- length(unique(cigs$year))
-W_cont <- kronecker(diag(n_time), cigw / rowSums(cigw))
+years_numb <- length(unique(cigs$year)) 
+# calculates the number of unique years in the dataset.
 
 
-dist <- as.matrix(dist(cigd))
-diag(dist) <- Inf # Diagonal elements will be 0
-
-Psi <- function(delta) {
-  W_dist <- dist ^ (-delta) # Build
-  W_dist <- W_dist / max(eigen(W_dist, symmetric = TRUE)$values) # Scale
-  kronecker(diag(n_time), W_dist)
-}
-
-X_cont <- W_cont %*% X_lag
-
-#######################################################################
-#######################################################################
-#######################################################################
+W_cont <- kronecker(diag(years_numb), cigw / rowSums(cigw)) 
+# Creates a spatial contiguity matrix by applying the Kronecker product to the 
+# identity matrix of years (diag(years_numb)) and normalizing the weights 
 
 
-# Connectivities ---
-n_time <- length(unique(cigs$year))
-# Contiguity matrix
-W_cont <- kronecker(diag(n_time), cigw / rowSums(cigw))
 # Inverse-distance decay function
 dist <- as.matrix(dist(cigd))
-diag(dist) <- Inf # Diagonal elements will be 0
+diag(dist) <- Inf 
+# Computes the pairwise distances between state centroids using the Euclidean 
+# distance. The diagonal is set to infinity (diagonal elements will be 0)
+# to prevent self-connections.
+
 Psi <- function(delta) {
   W_dist <- dist ^ (-delta) # Build
   W_dist <- W_dist / max(eigen(W_dist, symmetric = TRUE)$values) # Scale
-  kronecker(diag(n_time), W_dist)
+  kronecker(diag(years_numb), W_dist)
 }
-W_dist <- Psi(3)
+# A function to build the inverse-distance decay matrix (W_dist). It takes delta as a parameter and:
+#  Calculates inverse distances (dist ^ -delta).
+#  Scales the matrix by the maximum eigenvalue to standardize it.
+#  Applies the Kronecker product with the years' identity matrix to expand for the panel data.
 
-# Prepare variables ---
+
+# Prepare variables
 y <- cbind(logc = cigs$logc)
+# creates a response variable matrix with logc (log of cigarette consumption)
+
 X <- model.matrix(logc ~ logp + logy + year + state, data = cigs)
+# Constructs the model matrix using the model.matrix function. 
+# It includes logged cigarette prices (logp), logged income (logy), and fixed effects for year and state. (as stated in the task assignment)
 X_lag <- X[, c("logp", "logy")]
-colnames(X_lag) <- c("wlogp", "wlogy")
+colnames(X_lag) <- c("w_logp", "w_logy")
+# Extracts the relevant columns for spatial lags (prices and income), renaming them as w_logp and w_logy.
+
 X_cont <- W_cont %*% X_lag
+# Calculates the spatially lagged explanatory variables by multiplying W_cont with X_lag
+
 
 n_save <- 50L
 n_burn <- 10L
+# Set the number of posterior draws to save and discard, respectively.
+# set it to 50000L and 10000L in the end
 
 out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
                   n_save = n_save, n_burn = n_burn, options = set_options(
                     SLX = set_SLX(delta = 3, delta_scale = 0.05, delta_a = 2, delta_b = 2)))
+# out_slxdx: Fits the SLX model using the bslx function:
+#  y ~ X: Defines the model formula.
+#  W = Psi: Provides the function for the distance decay weights matrix.
+#  X_SLX = X_lag: Specifies the explanatory variables for spatial lags.
+#  n_save & n_burn: Sets the number of posterior draws.
+#  options = set_options(...): Provides settings for the SLX model, including the prior parameters for the decay parameter (delta).
+# delta = 3 specifies the starting value for the decay parameter in the MCMC sampler. The sampler then iteratively updates this value based on the posterior distribution obtained through sampling.
+# The prior distribution for delta is defined by delta_a and delta_b. Together, they determine the shape of the inverse-gamma prior distribution. The prior distribution influences the final estimate of delta by reflecting your beliefs about its likely values before seeing the data.
+
 summary(out_slxdx)
 
 
