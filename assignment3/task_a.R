@@ -122,6 +122,7 @@ eigen_centrality(
 # Bonus question
 
 library(bsreg)
+library(coda)
 
 
 cigs <- read_excel("./assignment3/data/cigarettes/cigarette+2var.xls") %>%
@@ -159,30 +160,14 @@ out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
 
 summary(out_slxdx)
 
+
 draws <- as_tibble(out_slxdx$draws) %>% 
     transmute(delta = delta_SLX)
 
-delta_estimate <- mean(draws$delta)
-
-delta_table <- tibble(
-  Parameter = "Distance Decay (Delta)",
-  Estimate = delta_estimate
-)
-
-print(delta_table)
-
-
-
-
-library(coda)
-
-# Convert draws to an mcmc object
 delta_mcmc <- as.mcmc(delta_draws)
 
-# Calculate the 99% credible interval using HPDinterval
 hpd_interval <- HPDinterval(delta_mcmc, prob = 0.99)
 
-# Create a summary table
 delta_summary <- tibble(
   Parameter = "Distance Decay (Delta)",
   Estimate = mean(delta_draws),
@@ -191,7 +176,6 @@ delta_summary <- tibble(
 )
 
 print(delta_summary)
-
 
 
 
