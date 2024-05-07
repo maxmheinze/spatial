@@ -150,8 +150,8 @@ colnames(X_lag) <- c("w_logp", "w_logy")
 
 X_cont <- W_cont %*% X_lag
 
-n_save <- 500L
-n_burn <- 100L
+n_save <- 5000L
+n_burn <- 1000L
 
 out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
                   n_save = n_save, n_burn = n_burn, options = set_options(
@@ -172,14 +172,27 @@ delta_table <- tibble(
 print(delta_table)
 
 
-delta_draws <- draws$delta
-delta_mean <- mean(delta_draws)
-delta_ci <- quantile(delta_draws, probs = c(0.025, 0.975))
+
+
+library(coda)
+
+# Convert draws to an mcmc object
+delta_mcmc <- as.mcmc(delta_draws)
+
+# Calculate the 99% credible interval using HPDinterval
+hpd_interval <- HPDinterval(delta_mcmc, prob = 0.99)
+
+# Create a summary table
 delta_summary <- tibble(
   Parameter = "Distance Decay (Delta)",
-  Estimate = delta_mean,
-  `2.5%` = delta_ci[1],
-  `97.5%` = delta_ci[2]
+  Estimate = mean(delta_draws),
+  `Lower Limit (99%)` = hpd_interval[1],
+  `Upper Limit (99%)` = hpd_interval[2]
 )
 
 print(delta_summary)
+
+
+
+
+
