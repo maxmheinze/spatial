@@ -60,7 +60,9 @@ pacman::p_load(
   xtable,
   ggplot2,
   reshape2,
-  viridis
+  viridis, 
+  bsreg,
+  coda
 )
 
 cigs <- read_excel("./assignment3/data/cigarettes/cigarette+2var.xls")
@@ -324,6 +326,74 @@ $$
 
 ## Bonus question
 
+First of all, it should be noted that the bonus question largely refers to the paper by \textcite{kuschnig2022}. Thereby, parts of it are replicated in this exercise to answer the question asked in the task assignment. In order to have the same initial data, the first step is therefore to reload the data used in this exercise in a way that is identical to the specifications used in the paper. 
+
+```{r Bonus data, include=FALSE}
+cigs <- read_excel("./assignment3/data/cigarettes/cigarette+2var.xls") %>%
+  mutate(year = factor(year + 1963), state = factor(state))
+cigw <- read_excel("./assignment3/data/cigarettes/Spat-Sym-US.xls",
+                   col_names = paste0(1:46)) %>% as.matrix()
+cigd <- read_excel("./assignment3/data/cigarettes/cigar_states.xls", col_names = TRUE)
+```
+
+The following code is used to replicate the results, and therefore also the distance decay parameter, from the $SLX(\delta)$ model in the paper. $\delta$ thereby refers to the distance decay parameter $\gamma$. In order to maintain parity with the paper, we stick to naming the distance decay parameter as $\delta$ in the bonus question. 
+
+```{r Bonus question code, echo=TRUE, results='hide'}
+
+years_numb <- length(unique(cigs$year))
+
+W_cont <- kronecker(diag(years_numb), cigw / rowSums(cigw)) 
+
+dist <- as.matrix(dist(cigd))
+diag(dist) <- Inf 
+
+Psi <- function(delta) {
+  W_dist <- dist ^ (-delta) # Build
+  W_dist <- W_dist / max(eigen(W_dist, symmetric = TRUE)$values) # Scale
+  kronecker(diag(years_numb), W_dist)
+}
+
+y <- cbind(logc = cigs$logc)
+X <- model.matrix(logc ~ logp + logy + year + state, data = cigs)
+X_lag <- X[, c("logp", "logy")]
+colnames(X_lag) <- c("w_logp", "w_logy")
+
+X_cont <- W_cont %*% X_lag
+
+n_save <- 500L
+n_burn <- 100L
+
+out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
+                  n_save = n_save, n_burn = n_burn, options = set_options(
+                    SLX = set_SLX(delta = 3, delta_scale = 0.05, delta_a = 2, delta_b = 2)))
+
+```
+
+We calculate the number of unique years in the dataset to then create a spatial contiguity matrix by applying the Kronecker product to the identity matrix of the years (diag(years_numb)) and normalizing the weights. To create the inverse-distance decay function, we compute the pairwise distances between the states using the Euclidean distance, whereby the diagonal is set to infinity (diagonal elements will be 0) to prevent self-connections. The function *Psi* then takes delta as a parameter and defines the weights matrix $1/dist^{\delta}$, scales the matrix by the maximum eigenvalue to standardize it and applies the Kronecker product with the identity matrix of the years to expand for the panel data.
+
+We then create a response variable matrix y with the log of cigarette consumption as well as construct the model matrix X, including logged cigarette prices, logged income, and fixed effects for year and state (as stated in the task assignment). 
+
+
+
+```{r Bonus question result, echo=FALSE}
+
+draws <- as_tibble(out_slxdx$draws) %>% 
+    transmute(delta = delta_SLX)
+
+delta_mcmc <- as.mcmc(delta_draws)
+
+hpd_interval <- HPDinterval(delta_mcmc, prob = 0.99)
+
+delta_summary <- tibble(
+  Parameter = "Distance Decay (Delta)",
+  Estimate = mean(delta_draws),
+  `Lower Limit (99%)` = hpd_interval[1],
+  `Upper Limit (99%)` = hpd_interval[2]
+)
+
+print(delta_summary)
+
+```
 
 
 
