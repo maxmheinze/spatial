@@ -151,8 +151,8 @@ colnames(X_lag) <- c("w_logp", "w_logy")
 
 X_cont <- W_cont %*% X_lag
 
-n_save <- 5000L
-n_burn <- 1000L
+n_save <- 50000L
+n_burn <- 10000L
 
 out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
                   n_save = n_save, n_burn = n_burn, options = set_options(
@@ -160,23 +160,20 @@ out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
 
 summary(out_slxdx)
 
-
 draws <- as_tibble(out_slxdx$draws) %>% 
-    transmute(delta = delta_SLX)
+  transmute(delta = delta_SLX)
 
-delta_mcmc <- as.mcmc(delta_draws)
-
+delta_mcmc <- as.mcmc(draws)
 hpd_interval <- HPDinterval(delta_mcmc, prob = 0.99)
 
 delta_summary <- tibble(
   Parameter = "Distance Decay (Delta)",
-  Estimate = mean(delta_draws),
+  Estimate = mean(draws$delta),
   `Lower Limit (99%)` = hpd_interval[1],
   `Upper Limit (99%)` = hpd_interval[2]
 )
 
 print(delta_summary)
-
 
 
 
