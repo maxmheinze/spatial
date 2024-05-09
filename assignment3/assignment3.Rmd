@@ -360,8 +360,8 @@ colnames(X_lag) <- c("w_logp", "w_logy")
 
 X_cont <- W_cont %*% X_lag
 
-n_save <- 500L
-n_burn <- 100L
+n_save <- 50000L
+n_burn <- 10000L
 
 out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
                   n_save = n_save, n_burn = n_burn, options = set_options(
@@ -369,24 +369,23 @@ out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
 
 ```
 
-We calculate the number of unique years in the dataset to then create a spatial contiguity matrix by applying the Kronecker product to the identity matrix of the years (diag(years_numb)) and normalizing the weights. To create the inverse-distance decay function, we compute the pairwise distances between the states using the Euclidean distance, whereby the diagonal is set to infinity (diagonal elements will be 0) to prevent self-connections. The function *Psi* then takes delta as a parameter and defines the weights matrix $1/dist^{\delta}$, scales the matrix by the maximum eigenvalue to standardize it and applies the Kronecker product with the identity matrix of the years to expand for the panel data.
+Following the paper and the R code provided on github, we calculate the number of unique years in the dataset to then create a spatial contiguity matrix by applying the Kronecker product to the identity matrix of the years (diag(years_numb)) and normalizing the weights. To create the inverse-distance decay function, we compute the pairwise distances between the states using the Euclidean distance, whereby the diagonal is set to infinity (diagonal elements will be 0) to prevent self-connections. The function *Psi* then takes delta as a parameter and defines the weights matrix $1/dist^{\delta}$, scales the matrix by the maximum eigenvalue to standardize it and applies the Kronecker product with the identity matrix of the years to expand for the panel data.
 
-We then create a response variable matrix y with the log of cigarette consumption as well as construct the model matrix X, including logged cigarette prices, logged income, and fixed effects for year and state (as stated in the task assignment). 
+We then create a response variable matrix *y* with the log of cigarette consumption as well as construct the model matrix *X*, including logged cigarette prices, logged income, and fixed effects for year and state (as stated in the task assignment). Creating *X_lag*, we extract the relevant columns for the spatial lags of prices and income and calculate the spatially lagged explanatory variables by performing a matrix multiplication of *W_cont* with *X_lag*. In a next step, we fit the SLX model using the bslx function. We define the model formula, provide the function for the distance decay weights matrix, specify the explanatory variables for spatial lags, set the number of posterior draws, as well as provide settings/otpions for the SLX model following the specifications from the github code. In a next step, we fit the SLX model using the bslx function. We define the model formula, provide the function for the distance decay weights matrix, specify the explanatory variables for spatial lags, set the number of posterior draws, as well as provide settings/otpions for the SLX model (including prior parameters for the distance decay parameter) following the specifications from the github code. We specify the starting value for the decay parameter in the Markov Chain Monte Carlo sampler, which then iteratively updates this value based on the posterior distribution obtained through sampling. We also specify the prior distribution for $\delta$, indicating the shape of the inverse-gamma prior distribution. 
 
-
+The following table shows the estimate (mean) for the distance decay parameter $\delta$ as well as a 99\% confidence interval derived with the *coda* package:
 
 ```{r Bonus question result, echo=FALSE}
 
 draws <- as_tibble(out_slxdx$draws) %>% 
     transmute(delta = delta_SLX)
 
-delta_mcmc <- as.mcmc(delta_draws)
-
+delta_mcmc <- as.mcmc(draws)
 hpd_interval <- HPDinterval(delta_mcmc, prob = 0.99)
 
 delta_summary <- tibble(
   Parameter = "Distance Decay (Delta)",
-  Estimate = mean(delta_draws),
+  Estimate = mean(draws$delta),
   `Lower Limit (99%)` = hpd_interval[1],
   `Upper Limit (99%)` = hpd_interval[2]
 )
@@ -395,7 +394,7 @@ print(delta_summary)
 
 ```
 
-
+The distance decay parameter derived using the out_slxdx output and therefore Bayesian inference quantifies the rate at which the spatial influence of a spatial variable decreases/decays over distance. This parameter is critical for modeling how changes in one location affect changes in another. In the context of the cigarette consumption model, the distance decay parameter indicates how cigarette sales or consumption in one state influence neighboring states, considering the spatial distribution of these states. A higher $\delta$ means that spatial influence decays more rapidly with distance, meaning that spatially close states have a much stronger influence on each other than those further away. We cannot be 100\% sure what the exact value of the estimate will be when knitting the final Rmd file. The estimate, however, matches quite well the value from the paper by \textcite{kuschnig2022}. The estimated mean distance decay parameter ($\delta = 3.005$ when we last ran code and therefore when rounded equal to the $3.01$ from the paper) thereby indicates the average of the posterior distribution of the parameter. The distance decay estimate signifies a relatively steep decline in spatial influence with distance, indicating that regions closer to each other have a significantly stronger effect on one another. This also makes sense intuitively in the context of cigarette consumption. 
 
 \newpage
 
@@ -413,12 +412,12 @@ Each of these cells has a resolution of 1 degree latitude $\times$ 1 degree long
 
 One possible reason for potential relative differences in the areas of each cell is the spherical shape of the Earth. Since the earth is a sphere and not a two-dimensional surface, a 1 $\times$ 1-degree grid cell does not correspond to an area of 110 km $\times$ 110 km everywhere on the globe. As the Earth is a globe, the longitudes converge at the poles. The horizontal distance (from East to West, i.e. the width of a cell) from one longitude to the next longitude becomes smaller the further you move from the equator to the poles (to the North or South). However, the distance between the lines of latitude, which run parallel, remains roughly constant across the globe. So while around the equator a 1 degree $\times$ 1 degree cell area has about 12100 squared kilometers (110 km $\times$ 110 km), the area of a 1 degree $\times$ 1 degree cell deviates and decreases the further you move towards the poles (as the East-West distance of the cell decreases). As the equator runs through Africa, the areas of 1 $\times$ 1 degree cells in Central Africa are larger than those in North and South Africa (as these cells are not located on/around the equator but located further towards the poles, where eventually the width of a cell would converge to zero).
 
-Furthermore, as taken into account in the analysis, the area of each cell in squared kilometers of land (and thus excluding seas and lakes), depends on the occurrence/proportion of standing or flowing waters in a cell. The presence of roughness, hills, or mountains can also influence the area surface. The areas can therefore differ depending on various conditions and environmental factors of a cell. The area of a 110 km $times$ 110 km square can, additionally and to mention a third reason, vary depending on the map and projection used. This is because distances and areas can deviate according to the projection used in an analysis due to distortion. 
+Furthermore, as taken into account in the analysis, the area of each cell in squared kilometers of land (and thus excluding seas and lakes), depends on the occurrence/proportion of standing or flowing waters in a cell. The presence of roughness, hills, or mountains can also influence the area surface. The areas can therefore differ depending on various conditions and environmental factors of a cell. The area of a 110 km $times$ 110 km square can, additionally and to mention a third reason, in general vary depending on the map and projection used. This is because distances and areas can deviate according to the projection used in an analysis due to distortion. 
 
 
 ## Un-normalized weights matrix and its effects on interpretations
 
-The weights matrix *W* used in the paper is a binary contiguity matrix, which is not normalized. All cells surrounding the cell of interest (neighboring cells being defined as being within a distance threshold of 180km) are assigned a value/weight of 1 and all other cells are assigned a value/weight of 0. In this case, the 8 adjacent cells are effectively considered neighbors (this is also called queen contiguity). More precisely, the average cell in the sample has 7.4 neighbors (since the cells on the edge no longer have 8 neighbors). Due to the binarity of the matrix, there is no further variation in influence based on the exact distance (either a cell is a neighbor of the cell of interest and thus has influence or not). As the matrix is not normalized, the sum of the values/weights in each row is not equal to 1, as is the case in the usual row-normalized matrix. The influence of each adjacent cell is taken into account equally and the cumulative effects of all neighbors are summed directly in the analysis. The influence of a certain cell on the cell of interest therefore does not depend on how many other neighbors the cell of interest has. The decision to use a non-normalized weights matrix was made by the authors to simplify the interpretation, as the coefficients of the spatial lags can be directly interpreted as the effects of a marginal change in a particular variable in one of the neighbors. 
+The weights matrix *W* used in the paper is a binary contiguity matrix, which is not normalized. All cells surrounding the cell of interest (neighboring cells being defined as being within a distance threshold of 180km) are assigned a value/weight of 1 and all other cells are assigned a value/weight of 0. In this case, the 8 adjacent cells are effectively considered neighbors (this is also called queen contiguity). More precisely, the average cell in the sample has 7.4 neighbors (since the cells on the edges no longer have 8 neighbors). Due to the binarity of the matrix, there is no further variation in influence based on the exact distance (either a cell is a neighbor of the cell of interest and thus has influence or not). As the matrix is not normalized, the sum of the values/weights in each row is not equal to 1, as is the case in the usual row-normalized matrix. The influence of each adjacent cell is taken into account equally and the cumulative effects of all neighbors are summed directly in the analysis. The influence of a certain cell on the cell of interest therefore does not depend on how many other neighbors the cell of interest has. The decision to use a non-normalized weights matrix was made by the authors to simplify the interpretation, as the coefficients of the spatial lags can be directly interpreted as the effects of a marginal change in a particular variable in one of the neighbors. 
 
 The spatial econometric model thus captures the total influence of those units that are considered neighboring, whereby each coefficient of a neighboring cell with a change can be interpreted as the total additional effect of this one other neighboring cell. Therefore, the coefficients on spatially lagged variables show cumulative and not averaged effects of changes in neighboring cells. In contrast, a normalized weights matrix (more precisely, a row-normalized weights matrix) shows the average influence of all neighbors. The coefficients for spatial lags can thus be interpreted directly as the effects of a change in a neighbor on the dependent variable in the cell of interest, and hence the authors' decision to use the chosen matrix *W* for simplicity reasons. Specifically, the coefficient for spatially lagged variables gives a direct interpretation for the effect on the cell of interest of a change in, say, conflict frequency or weather shocks in one or more neighboring cells. 
 
