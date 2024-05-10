@@ -3,27 +3,20 @@
 # PACKAGES ---------------------------------------------------------------------
 
 library(pacman)
-p_load(
-  haven,
-  sf,
-  sp,
-  data.table,
-  tidyverse,
-  dplyr,
-  stargazer,
-  SDPDmod,
-  spatialreg,
-  spdep,
-  units,
-  splm
-)
+pacman::p_load(spatialreg, bsreg, patchwork,
+               gridExtra, fixest, splm, stringi,
+               stringr, stringdist, haven, sf, dplyr, fuzzyjoin, 
+               comparator, digest, zoomerjoin, tidyr,
+               fixest, conleyreg, plm, stargazer,
+               tidyverse, tmap, spdep, SDPDmod, generics, knitr, 
+               kableExtra, formatR, readxl,
+               haven, flextable, broom, units)
 
 # LOADING DATA -----------------------------------------------------------------
 
 intersect_coord <- read_dta("./data/harari/intersect_coord.dta")
 geoconflict_main <- read_dta("./data/harari/geoconflict_main.dta", encoding = "UTF-8")
 raster_Africa <- st_read("./data/harari/raster_Africa.shp")
-raster_Africa_alt <- read_sf("./data/harari/raster_Africa.shp")
 
 ## Preparing for merging
 raster <- raster_Africa %>%
@@ -31,7 +24,7 @@ raster <- raster_Africa %>%
           lon = longitude_,
           lat = latitude_m)
 
-df_1 <- merge(geoconflict_main, raster, by = c("lat", "lon")) %>% 
+df_1 <- merge(geoconflict_main, raster, by = c("_ID","lat", "lon")) %>% 
   #filter(!(country_largest_share %in% c("Western Sahara", "Gambia"))) %>% #these countries are not listed in the online appendix
   filter(!(year == 1997)) %>%
   rename(year_ = year,
@@ -43,58 +36,72 @@ df_1 <- merge(geoconflict_main, raster, by = c("lat", "lon")) %>%
 
 # REPLICATION TABLE 2 ----------------------------------------------------------
 ## Model 1
-model_1 <- lm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
+model_1 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg + 
                  elevation_cell + rough_cell + area_cell + use_primary + 
                  dis_river_cell + shared + border + any_mineral + ELF +
-                 year_ + country_, data = df_1)
+                 year_ + i(country_, as.numeric(year_)),
+               data = df_1,
+               index = c("cell", "year_"),
+               model = "pooling")
 summary(model_1)
 
 ## Model 2
 ## From equation 2: include all W*controls and W*country FE!
-df_2 <- df_1 %>% 
-  select(c(5, 7:15, 20, 46:51, 58:119, 121:167)) #I leave out one country (Zimbawe)
-
-model_2 <- lm(ANY_EVENT_ACLED ~ . , data = df_2)
+model_2 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
+                 GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                 W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                 W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                 elevation_cell + rough_cell + area_cell + use_primary + 
+                 dis_river_cell + shared + border + any_mineral + ELF +
+                 W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + 
+                 W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
+                 year_ + i(country_, as.numeric(year_)),
+               data = df_1,
+               index = c("cell", "year_"),
+               model = "pooling")
 summary(model_2)
 
 ## Model 3
 coor <- df_1 %>%
   filter(year_ == 2000) %>%
   select(cell, geometry) %>%
-  st_as_sf()
+  st_as_sf(crs = "WGS84")
 
 distw <- dnearneigh(st_centroid(coor), 0, 180, row.names = coor$cell)
 W <- nb2listw(distw, style = "B", zero.policy = TRUE) 
+distmat <- listw2mat(W)
 
-model_3 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
+model_3 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                   GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
                   W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
                   W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
-                  elevation_cell + rough_cell + area_cell + use_primary + dis_river_cell + shared +  border + any_mineral + ELF + 
-                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
-                  country_ + year_,
-             data = df_1[,1:73],
+                  elevation_cell + rough_cell + area_cell + use_primary + 
+                  dis_river_cell + shared + border + any_mineral + ELF +
+                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + 
+                  W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
+                  year_ + i(country_, as.numeric(year_)),
+             data = df_1,
              index= c("cell","year_"),
              listw = W,
              model="pooling",
              effect = "time",
-             spatial.error="none",
-             lag = TRUE, 
-             Hess = TRUE,
+             zero.policy = TRUE, 
+             lag=TRUE,
              local=list( parallel = T))
 summary(model_3)
-
 
 ## Model 4
 model_4 <- spml(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
                   GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
                   W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
                   W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
-                  elevation_cell + rough_cell + area_cell + use_primary + dis_river_cell + shared +  border + any_mineral + ELF + 
-                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
+                  elevation_cell + rough_cell + area_cell + use_primary + dis_river_cell + 
+                  shared +  border + any_mineral + ELF + 
+                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + W_dis_river_cell + 
+                  W_shared  + W_border + W_any_mineral + W_ELF +
                   country_:year_,
-                data = df_1[,1:73],
+                data = df_1,
                 index= c("cell", "year_"),
                 listw = W,
                 model="pooling",
@@ -118,6 +125,7 @@ neighbors_horizontal <- function(centroids) {
   
   # Extract latitudes
   latitudes <- st_coordinates(centroids)[,2]
+  distances <- st_distance(centroids)
   
   # Initialize a matrix to store horizontal neighbors
   num_points <- nrow(centroids)
@@ -125,11 +133,12 @@ neighbors_horizontal <- function(centroids) {
   
   for (i in seq_len(num_points)) {
     # Find points within the same latitude band
-    neighbor_ids <- which(latitudes == latitudes[i])
+    neighbor_ids <- which(round(latitudes,2) == round(latitudes[i],2) & distances[i,] < set_units(180000, "m"))
     
     # Store neighbor ids in the matrix
     horizontal_neighbors[i, neighbor_ids] <- 1
-  }
+    
+    }
   
   # Convert the matrix to a listw object
   listw <- mat2listw(horizontal_neighbors, style="B", zero.policy = TRUE)
@@ -139,16 +148,16 @@ neighbors_horizontal <- function(centroids) {
 
 neighbors_vertical <- function(centroids) {
   
-  # Extract longitudes
   longitudes <- st_coordinates(centroids)[,1]
+  distances <- st_distance(centroids)
   
   # Initialize a matrix to store vertical neighbors
   num_points <- nrow(centroids)
   vertical_neighbors <- matrix(0, nrow = num_points, ncol = num_points)
   
   for (i in seq_len(num_points)) {
-    # Find points within the same longitude band
-    neighbor_ids <- which(longitudes == longitudes[i])
+    
+    neighbor_ids <- which(round(longitudes,2) == round(longitudes[i],2) & distances[i,] < set_units(180000, "m"))
     
     # Store neighbor ids in the matrix
     vertical_neighbors[i, neighbor_ids] <- 1
@@ -166,79 +175,6 @@ vertical <- neighbors_vertical(st_centroid(coor))
 
 # Try visualize network to see if correct
 plot(st_geometry(coor))
+coords <- st_coordinates(st_centroid(coor))
 plot(horizontal, coords, add=TRUE, col="blue", cex=0.5)
 plot(vertical, coords, add=TRUE, col="red", cex=0.5)
-
-## Vertical and Horizontal Version Model 3/4
-model_3_ver <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
-                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
-                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
-                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
-                  elevation_cell + rough_cell + area_cell + use_primary + dis_river_cell + shared +  border + any_mineral + ELF + 
-                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
-                  country_ + year_,
-                data = df_1[,1:73],
-                index= c("cell","year_"),
-                listw = vertical,
-                model="pooling",
-                effect = "time",
-                spatial.error="none",
-                lag = TRUE, 
-                Hess = TRUE,
-                local=list( parallel = T))
-summary(model_3_ver)
-
-model_3_hor <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
-                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
-                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
-                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
-                  elevation_cell + rough_cell + area_cell + use_primary + dis_river_cell + shared +  border + any_mineral + ELF + 
-                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
-                  country_ + year_,
-                data = df_1[,1:73],
-                index= c("cell","year_"),
-                listw = horizontal,
-                model="pooling",
-                effect = "time",
-                spatial.error="none",
-                lag = TRUE, 
-                Hess = TRUE,
-                local=list( parallel = T))
-summary(model_3_hor)
-
-
-model_4_ver <- spml(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
-                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
-                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
-                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
-                  elevation_cell + rough_cell + area_cell + use_primary + dis_river_cell + shared +  border + any_mineral + ELF + 
-                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
-                  country_:year_,
-                data = df_1[,1:73],
-                index= c("cell", "year_"),
-                listw = vertical,
-                model="pooling",
-                effect = "time",
-                spatial.error="none",
-                lag = TRUE, 
-                Hess = TRUE,
-                local=list( parallel = T))
-summary(model_4_ver)
-
-model_4_hor <- spml(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
-                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
-                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
-                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
-                  elevation_cell + rough_cell + area_cell + use_primary + dis_river_cell + shared +  border + any_mineral + ELF + 
-                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
-                  country_:year_,
-                data = df_1[,1:73],
-                index= c("cell", "year_"),
-                listw = horizontal,
-                model="pooling",
-                effect = "time",
-                spatial.error="none",
-                lag = TRUE, 
-                Hess = TRUE,
-                local=list( parallel = T))
-summary(model_4_hor)
