@@ -62,10 +62,12 @@ pacman::p_load(
   reshape2,
   viridis, 
   bsreg,
-  coda
+  coda,
+  stochvol
 )
 
-cigs <- read_excel("./assignment3/data/cigarettes/cigarette+2var.xls")
+cigs <- read_excel("./assignment3/data/cigarettes/cigarette+2var.xls") %>%
+  mutate(year = as.factor(year), state = as.factor(state))
 
 cigw <- read_excel("./assignment3/data/cigarettes/Spat-Sym-US.xls", col_names = FALSE) %>%
   as.matrix()
@@ -338,7 +340,7 @@ cigd <- read_excel("./assignment3/data/cigarettes/cigar_states.xls", col_names =
 
 The following code is used to replicate the results, and therefore also the distance decay parameter, from the $SLX(\delta)$ model in the paper. $\delta$ thereby refers to the distance decay parameter $\gamma$. In order to maintain parity with the paper, we stick to naming the distance decay parameter as $\delta$ in the bonus question. 
 
-```{r Bonus question code, echo=TRUE, results='hide'}
+```{r Bonus question code, echo=TRUE, results='hide', cache = TRUE}
 
 years_numb <- length(unique(cigs$year))
 
