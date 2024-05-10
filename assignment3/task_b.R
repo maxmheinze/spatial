@@ -121,22 +121,6 @@ model_4 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + 
                 local=list( parallel = T))
 summary(model_4)
 
-mod4 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg + W_GSmain_ext_SPEI4pg + 
-               W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg + W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg + elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
-               dis_river_cell + as.factor(shared) +  as.factor(border) + as.factor(any_mineral) +
-               ELF + W_elevation_cell + W_rough_cell + W_area_cell + W_ELF + as.factor(W_any_mineral) + as.factor(W_shared)  + 
-               W_dis_river_cell + as.factor(W_use_primary) + as.factor(countryyear), # country x year FE
-             data = df_4, 
-             index= c("cell","year_"),
-             listw = W,
-             model = "pooling",  # no fixed effects
-             effect = "individual", 
-             spatial.error="none",
-             zero.policy = TRUE, 
-             dynamic = TRUE,
-             lag = TRUE, 
-             Hess = TRUE,
-             local=list( parallel = T)) # makes it faster
 
 # VERTICAL HORIZONTAL CONTIGUITY -----------------------------------------------
 'The horizontal (vertical) contiguity matrix means that only cells which share
