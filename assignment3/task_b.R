@@ -94,7 +94,7 @@ model_3 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + 
                 local=list( parallel = T))
 summary(model_3)
 
-df_4 <- df_1 %>%
+df_2 <- df_1 %>%
   mutate(countryyear = paste0(country_, "_", year_))
 
 
@@ -108,7 +108,7 @@ model_4 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + 
                   W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_use_primary) + W_dis_river_cell + 
                   as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
                   as.factor(countryyear),
-                data = df_4,
+                data = df_2,
                 index= c("cell", "year_"),
                 listw = W,
                 model="pooling",
@@ -126,10 +126,10 @@ summary(model_4)
 # The horizontal (vertical) contiguity matrix means that only cells which share
 # the same latitude (longitude) are considered to be adjacent.
 
-plot(st_geometry(coor))
-coords <- st_coordinates(st_centroid(coor))
-rook_nb <- poly2nb(coor, row.names=coor$cell, queen=FALSE)
-plot(rook_nb, coords, add=TRUE, col="green", cex=0.5)
+# plot(st_geometry(coor))
+# coords <- st_coordinates(st_centroid(coor))
+# rook_nb <- poly2nb(coor, row.names=coor$cell, queen=FALSE)
+# plot(rook_nb, coords, add=TRUE, col="green", cex=0.5)
 
 neighbors_horizontal <- function(centroids) {
   
@@ -189,3 +189,89 @@ coords <- st_coordinates(st_centroid(coor))
 plot(horizontal, coords, add=TRUE, col="blue", cex=0.5)
 plot(vertical, coords, add=TRUE, col="red", cex=0.5)
 
+# SPILLOVER EFFECT -------------------------------------------------------------
+model_3_hor <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
+                  dis_river_cell + as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF +
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_border) +
+                  as.factor(W_use_primary) + W_dis_river_cell + as.factor(W_shared) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(country_):as.numeric(year_),
+                data = df_1,
+                index= c("cell","year_"),
+                listw = horizontal,
+                model="pooling",
+                effect = "time",
+                spatial.error = "none", 
+                zero.policy = TRUE, 
+                lag=TRUE,
+                dynamic = TRUE,
+                local=list( parallel = T))
+summary(model_3_hor)
+
+model_3_ver <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
+                  dis_river_cell + as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF +
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_border) +
+                  as.factor(W_use_primary) + W_dis_river_cell + as.factor(W_shared) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(country_):as.numeric(year_),
+                data = df_1,
+                index= c("cell","year_"),
+                listw = vertical,
+                model="pooling",
+                effect = "time",
+                spatial.error = "none", 
+                zero.policy = TRUE, 
+                lag=TRUE,
+                dynamic = TRUE,
+                local=list( parallel = T))
+summary(model_3_ver)
+
+model_4_hor <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + dis_river_cell + 
+                  as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF + 
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_use_primary) + W_dis_river_cell + 
+                  as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(countryyear),
+                data = df_2,
+                index= c("cell", "year_"),
+                listw = horizontal,
+                model="pooling",
+                effect = "individual",
+                spatial.error="none",
+                zero.policy = TRUE,
+                dynamic = TRUE,
+                lag = TRUE, 
+                Hess = TRUE,
+                local=list( parallel = T))
+summary(model_4_hor)
+
+model_4_ver <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + dis_river_cell + 
+                  as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF + 
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_use_primary) + W_dis_river_cell + 
+                  as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(countryyear),
+                data = df_2,
+                index= c("cell", "year_"),
+                listw = vertical,
+                model="pooling",
+                effect = "individual",
+                spatial.error="none",
+                zero.policy = TRUE,
+                dynamic = TRUE,
+                lag = TRUE, 
+                Hess = TRUE,
+                local=list( parallel = T))
+summary(model_4_ver)
