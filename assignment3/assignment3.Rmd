@@ -790,7 +790,7 @@ knitr::kable(rbind(summary(model_4_hor)$ARCoefTable, summary(model_4_hor)$CoefTa
 knitr::kable(rbind(summary(model_4_ver)$ARCoefTable, summary(model_4_ver)$CoefTable[1:14,]), caption = "The model from Column 4 with a vertical contiguity matrix.", format = "simple")
 ```
 
-*Add last bullet point!*
- 
+Overall, these different ways of defining the contiguity matrix do not change radically the effect of the variables of interest. This seems to favor the argumentation of \textcite{LeSage2014} that spatial regression models are not as sensitive as believed to the particular specifications used for the spatial weight structure in these models.
+The value of the spatial autoregressive parameter $\lambda$ fluctuates across different specifications and spatial weights matrices. In Model 4, $\lambda$ stands at 0.04, whereas in Model 3 utilizing the vertical spatial weights matrix, it increases to approximately 0.06. Altough these little differences can translate into large effects because of their amplification, the overall outcomes remain consistent across models.
 
 \newpage
