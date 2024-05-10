@@ -2,7 +2,6 @@
 
 # PACKAGES ---------------------------------------------------------------------
 
-library(pacman)
 pacman::p_load(spatialreg, bsreg, patchwork,
                gridExtra, fixest, splm, stringi,
                stringr, stringdist, haven, sf, dplyr, fuzzyjoin, 
@@ -14,9 +13,9 @@ pacman::p_load(spatialreg, bsreg, patchwork,
 
 # LOADING DATA -----------------------------------------------------------------
 
-intersect_coord <- read_dta("./data/harari/intersect_coord.dta")
-geoconflict_main <- read_dta("./data/harari/geoconflict_main.dta", encoding = "UTF-8")
-raster_Africa <- st_read("./data/harari/raster_Africa.shp")
+intersect_coord <- read_dta("./assignment3/data/harari/intersect_coord.dta")
+geoconflict_main <- read_dta("./assignment3/data/harari/geoconflict_main.dta", encoding = "UTF-8")
+raster_Africa <- st_read("./assignment3/data/harari/raster_Africa.shp")
 
 ## Preparing for merging
 raster <- raster_Africa %>%
@@ -38,9 +37,9 @@ df_1 <- merge(geoconflict_main, raster, by = c("_ID","lat", "lon")) %>%
 ## Model 1
 model_1 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg + 
-                 elevation_cell + rough_cell + area_cell + use_primary + 
-                 dis_river_cell + shared + border + any_mineral + ELF +
-                 year_ + i(country_, as.numeric(year_)),
+                 elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
+                 dis_river_cell + as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF +
+                 as.factor(year_) + i(country_, as.numeric(year_)),
                data = df_1,
                index = c("cell", "year_"),
                model = "pooling")
@@ -52,11 +51,11 @@ model_2 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
-                 elevation_cell + rough_cell + area_cell + use_primary + 
-                 dis_river_cell + shared + border + any_mineral + ELF +
+                 elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
+                 dis_river_cell + as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF +
                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + 
-                 W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
-                 year_ + i(country_, as.numeric(year_)),
+                 W_dis_river_cell + as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
+                 as.factor(year_) + i(country_, as.numeric(year_)),
                data = df_1,
                index = c("cell", "year_"),
                model = "pooling")
@@ -72,45 +71,72 @@ distw <- dnearneigh(st_centroid(coor), 0, 180, row.names = coor$cell)
 W <- nb2listw(distw, style = "B", zero.policy = TRUE) 
 distmat <- listw2mat(W)
 
+
+
 model_3 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                   GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
                   W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
                   W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
-                  elevation_cell + rough_cell + area_cell + use_primary + 
-                  dis_river_cell + shared + border + any_mineral + ELF +
-                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + 
-                  W_dis_river_cell + W_shared  + W_border + W_any_mineral + W_ELF +
-                  year_ + i(country_, as.numeric(year_)),
-             data = df_1,
-             index= c("cell","year_"),
-             listw = W,
-             model="pooling",
-             effect = "time",
-             zero.policy = TRUE, 
-             lag=TRUE,
-             local=list( parallel = T))
-summary(model_3)
-
-## Model 4
-model_4 <- spml(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
-                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
-                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
-                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
-                  elevation_cell + rough_cell + area_cell + use_primary + dis_river_cell + 
-                  shared +  border + any_mineral + ELF + 
-                  W_elevation_cell + W_rough_cell + W_area_cell + W_use_primary + W_dis_river_cell + 
-                  W_shared  + W_border + W_any_mineral + W_ELF +
-                  country_:year_,
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
+                  dis_river_cell + as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF +
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_border) +
+                  as.factor(W_use_primary) + W_dis_river_cell + as.factor(W_shared) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(country_):as.numeric(year_),
                 data = df_1,
-                index= c("cell", "year_"),
+                index= c("cell","year_"),
                 listw = W,
                 model="pooling",
                 effect = "time",
+                spatial.error = "none", 
+                zero.policy = TRUE, 
+                lag=TRUE,
+                dynamic = TRUE,
+                local=list( parallel = T))
+summary(model_3)
+
+df_4 <- df_1 %>%
+  mutate(countryyear = paste0(country_, "_", year_))
+
+
+## Model 4
+model_4 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + dis_river_cell + 
+                  as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF + 
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_use_primary) + W_dis_river_cell + 
+                  as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(countryyear),
+                data = df_4,
+                index= c("cell", "year_"),
+                listw = W,
+                model="pooling",
+                effect = "individual",
                 spatial.error="none",
+                zero.policy = TRUE,
+                dynamic = TRUE,
                 lag = TRUE, 
                 Hess = TRUE,
                 local=list( parallel = T))
 summary(model_4)
+
+mod4 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg + W_GSmain_ext_SPEI4pg + 
+               W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg + W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg + elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
+               dis_river_cell + as.factor(shared) +  as.factor(border) + as.factor(any_mineral) +
+               ELF + W_elevation_cell + W_rough_cell + W_area_cell + W_ELF + as.factor(W_any_mineral) + as.factor(W_shared)  + 
+               W_dis_river_cell + as.factor(W_use_primary) + as.factor(countryyear), # country x year FE
+             data = df_4, 
+             index= c("cell","year_"),
+             listw = W,
+             model = "pooling",  # no fixed effects
+             effect = "individual", 
+             spatial.error="none",
+             zero.policy = TRUE, 
+             dynamic = TRUE,
+             lag = TRUE, 
+             Hess = TRUE,
+             local=list( parallel = T)) # makes it faster
 
 # VERTICAL HORIZONTAL CONTIGUITY -----------------------------------------------
 'The horizontal (vertical) contiguity matrix means that only cells which share
