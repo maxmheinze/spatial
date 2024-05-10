@@ -4,7 +4,7 @@ author:
   - "Elia Di Gregorio (h12039313@s.wu.ac.at)"
   - "Max Heinze (h11742049@s.wu.ac.at)"
   - "Sophia Ludescher (h11801892@s.wu.ac.at)"
-date: "May 3, 2024"
+date: "May 10, 2024"
 output: 
   pdf_document:
     toc: true
@@ -403,7 +403,7 @@ print(delta_summary)
 
 ```
 
-The distance decay parameter derived using the out_slxdx output and therefore Bayesian inference quantifies the rate at which the spatial influence of a spatial variable decreases/decays over distance. This parameter is critical for modeling how changes in one location affect changes in another. In the context of the cigarette consumption model, the distance decay parameter indicates how cigarette sales or consumption in one state influence neighboring states, considering the spatial distribution of these states. A higher $\delta$ means that spatial influence decays more rapidly with distance, meaning that spatially close states have a much stronger influence on each other than those further away. We cannot be 100\% sure what the exact value of the estimate will be when knitting the final Rmd file. The estimate, however, matches quite well the value from the paper by \textcite{kuschnig2022}. The estimated mean distance decay parameter ($\delta = 3.005$ when we last ran code and therefore when rounded equal to the $3.01$ from the paper) thereby indicates the average of the posterior distribution of the parameter. The distance decay estimate signifies a relatively steep decline in spatial influence with distance, indicating that regions closer to each other have a significantly stronger effect on one another. This also makes sense intuitively in the context of cigarette consumption. 
+The distance decay parameter derived using the out_slxdx output and therefore Bayesian inference quantifies the rate at which the spatial influence of a spatial variable decreases/decays over distance. This parameter is critical for modeling how changes in one location affect changes in another. In the context of the cigarette consumption model, the distance decay parameter indicates how cigarette sales or consumption in one state influence neighboring states, considering the spatial distribution of these states. A higher $\delta$ means that spatial influence decays more rapidly with distance, meaning that spatially close states have a much stronger influence on each other than those further away. We cannot be 100\% sure what the exact value of the estimate will be when knitting the final Rmd file. The estimate, however, matches quite well the value from the paper by \textcite{kuschnig2022}. The estimated mean distance decay parameter ($\delta = 3.00$ when we last ran code and therefore close to the $3.01$ from the paper) thereby indicates the average of the posterior distribution of the parameter. The distance decay estimate signifies a relatively steep decline in spatial influence with distance, indicating that regions closer to each other have a significantly stronger effect on one another. This also makes sense intuitively in the context of cigarette consumption. 
 
 \newpage
 
@@ -792,5 +792,15 @@ knitr::kable(rbind(summary(model_4_ver)$ARCoefTable, summary(model_4_ver)$CoefTa
 
 Overall, these different ways of defining the contiguity matrix do not change radically the effect of the variables of interest. This seems to favor the argumentation of \textcite{LeSage2014} that spatial regression models are not as sensitive as believed to the particular specifications used for the spatial weight structure in these models.
 The value of the spatial autoregressive parameter $\lambda$ fluctuates across different specifications and spatial weights matrices. In Model 4, $\lambda$ stands at 0.04, whereas in Model 3 utilizing the vertical spatial weights matrix, it increases to approximately 0.06. Altough these little differences can translate into large effects because of their amplification, the overall outcomes remain consistent across models.
+
+## Visualization of Spillover Effects
+
+Unfortunately, we did not manage to produce such a visualization before the deadline of this assignment. Part of this is due to us being not familiar enough with this kind of dynamic spatial panel model. We will thus comment on the spillover visualization given on page 601 of the paper by \textcite{harari2018} in lieu of an own visualization. For reference, the figure from the paper is printed in the following:
+
+\begin{center}
+  \includegraphics[width=6cm]{harari_fig2.png}
+\end{center}
+
+The figure from \textcite{harari2018} shows that the effect of an SPEI growing season shock on conflict events propagates through both time and space. The first panel of their figure shows that expectedly, the effect on the cell experiencing the shock is largest one period after the shock. After three periods, the shock seems to dissipate. In contrast, the effect on neighboring cells is much smaller in magnitude, but does not dissipate in the five periods plotted. The second panel of their figure depicts spillovers beyond the direct neighbors. From that panel, we can see that spillovers to neighbors of neighbors seem to persist similarly to spillovers to neighbors, but that those effects are much weaker. There also does not seem to be any noticable effect on third-degree neighbors and beyond.
 
 \newpage

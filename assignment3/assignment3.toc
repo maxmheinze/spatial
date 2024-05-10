@@ -10,3 +10,4 @@
 \contentsline {subsection}{Un-normalized weights matrix and its effects on interpretations}{11}{section*.11}%
 \contentsline {subsection}{Replication Tables}{12}{section*.12}%
 \contentsline {subsection}{Vertical - Horizontal Contiguity}{15}{section*.13}%
+\contentsline {subsection}{Visualization of Spillover Effects}{20}{section*.14}%
