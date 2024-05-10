@@ -340,7 +340,7 @@ cigd <- read_excel("./assignment3/data/cigarettes/cigar_states.xls", col_names =
 
 The following code is used to replicate the results, and therefore also the distance decay parameter, from the $SLX(\delta)$ model in the paper. $\delta$ thereby refers to the distance decay parameter $\gamma$. In order to maintain parity with the paper, we stick to naming the distance decay parameter as $\delta$ in the bonus question. 
 
-```{r Bonus question code, echo=TRUE, results='hide', cache = TRUE}
+```{r Bonus question code, echo=TRUE, eval = FALSE, results='hide'}
 
 years_numb <- length(unique(cigs$year))
 
@@ -369,7 +369,14 @@ out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
                   n_save = n_save, n_burn = n_burn, options = set_options(
                     SLX = set_SLX(delta = 3, delta_scale = 0.05, delta_a = 2, delta_b = 2)))
 
+saveRDS(out_slxdx, "./assignment3/intermediate_output/out_slxdx.RDS")
+
 ```
+
+```{r load_bayesian_draws, include=FALSE}
+out_slxdx <- readRDS("./assignment3/intermediate_output/out_slxdx.RDS")
+```
+
 
 Following the paper and the R code provided on github, we calculate the number of unique years in the dataset to then create a spatial contiguity matrix by applying the Kronecker product to the identity matrix of the years (diag(years_numb)) and the row-normalized weights. To create the inverse-distance decay function, we compute the pairwise distances between the states using the Euclidean distance, where then the diagonal is set to infinity (diagonal elements will be 0) to prevent self-connections. The function *Psi* then takes delta as a parameter and defines the weights matrix $1/dist^{\delta}$, scales the matrix by the maximum eigenvalue and applies the Kronecker product with the identity matrix of the years to expand for the panel data.
 
@@ -402,6 +409,8 @@ The distance decay parameter derived using the out_slxdx output and therefore Ba
 
 # Task B
 
+Text Block A
+
 ```{r setup_task_b, include = FALSE}
 pacman::p_load(spatialreg, bsreg, patchwork,
                gridExtra, fixest, splm, stringi,
@@ -411,9 +420,11 @@ pacman::p_load(spatialreg, bsreg, patchwork,
                tidyverse, tmap, spdep, SDPDmod, generics, knitr, 
                kableExtra, formatR, readxl,
                haven, flextable, broom, units)
+```
 
-# LOADING DATA -----------------------------------------------------------------
+Text Block B
 
+```{r prepare_data_b, include = FALSE, cache = TRUE}
 intersect_coord <- read_dta("./assignment3/data/harari/intersect_coord.dta")
 geoconflict_main <- read_dta("./assignment3/data/harari/geoconflict_main.dta", encoding = "UTF-8")
 raster_Africa <- st_read("./assignment3/data/harari/raster_Africa.shp")
@@ -435,7 +446,9 @@ df_1 <- merge(geoconflict_main, raster, by = c("_ID","lat", "lon")) %>%
          cell = as.factor(cell))
 ```
 
-```{r}
+Text Block C
+
+```{r b_model_1, eval = FALSE, cache=TRUE}
 model_1 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg + 
                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
@@ -444,9 +457,17 @@ model_1 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                data = df_1,
                index = c("cell", "year_"),
                model = "pooling")
+
+saveRDS(model_1, "./assignment3/intermediate_output/model_1.RDS")
 ```
 
-```{r}
+```{r b_model_1_load, include=FALSE}
+model_1 <- readRDS("./assignment3/intermediate_output/model_1.RDS")
+```
+
+Text Block D
+
+```{r b_model_2, eval = FALSE, cache=TRUE}
 model_2 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
@@ -459,9 +480,17 @@ model_2 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                data = df_1,
                index = c("cell", "year_"),
                model = "pooling")
+
+saveRDS(model_2, "./assignment3/intermediate_output/model_2.RDS")
 ```
 
-```{r}
+```{r b_model_2_load, include=FALSE}
+model_2 <- readRDS("./assignment3/intermediate_output/model_2.RDS")
+```
+
+Text Block E
+
+```{r b_model_3_prepare}
 coor <- df_1 %>%
   filter(year_ == 2000) %>%
   select(cell, geometry) %>%
@@ -470,9 +499,9 @@ coor <- df_1 %>%
 distw <- dnearneigh(st_centroid(coor), 0, 180, row.names = coor$cell)
 W <- nb2listw(distw, style = "B", zero.policy = TRUE) 
 distmat <- listw2mat(W)
+```
 
-
-
+```{r b_model_3, eval = FALSE}
 model_3 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
                   GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
                   W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
@@ -492,9 +521,17 @@ model_3 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + 
                 lag=TRUE,
                 dynamic = TRUE,
                 local=list( parallel = T))
+
+saveRDS(model_3, "./assignment3/intermediate_output/model_3.RDS")
 ```
 
-```{r}
+```{r b_model_3_load, include=FALSE}
+model_3 <- readRDS("./assignment3/intermediate_output/model_3.RDS")
+```
+
+Text Block F
+
+```{r b_model_4, eval = FALSE, cache=TRUE}
 df_4 <- df_1 %>%
   mutate(countryyear = paste0(country_, "_", year_))
 
@@ -520,9 +557,113 @@ model_4 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + 
                 lag = TRUE, 
                 Hess = TRUE,
                 local=list( parallel = T))
+
+saveRDS(model_4, "./assignment3/intermediate_output/model_4.RDS")
 ```
 
+```{r b_model_4_load, include=FALSE}
+model_4 <- readRDS("./assignment3/intermediate_output/model_4.RDS")
+```
 
+Text Block G
+
+```{r print_cols_1_2, echo = FALSE, results = "asis"}
+cat("\\begin{center}")
+stargazer(model_1, model_2, 
+          keep = c("SPEI4pg", "L1_SPEI4pg", "L2_SPEI4pg", "GSmain_ext_SPEI4pg",
+                   "L1_GSmain_ext_SPEI4pg", "L2_GSmain_ext_SPEI4pg",
+                   "W_SPEI4pg", "W_L1_SPEI4pg", "W_L2_SPEI4pg", "W_GSmain_ext_SPEI4pg",
+                   "W_L1_GSmain_ext_SPEI4pg", "W_L2_GSmain_ext_SPEI4pg"), 
+          title = "Replication of Columns 1 and 2.",
+          float = FALSE,
+          header = FALSE)
+cat("\\end{center}")
+```
+
+Text Block H
+
+```{r print_col_3, echo = FALSE}
+knitr::kable(summary(model_3)$CoefTable[1:14,], caption = "Replication of Column 3.", format = "simple")
+```
+
+Text Block J
+
+```{r print_col_4, echo = FALSE}
+knitr::kable(summary(model_4)$CoefTable[1:14,], caption = "Replication of Column 4.", format = "simple")
+```
+
+Text Block K
+
+```{r africa_maps_1, fig.width=7, fig.height=7, fig.align="center"}
+plot(st_geometry(coor))
+coords <- st_coordinates(st_centroid(coor))
+rook_nb <- poly2nb(coor, row.names=coor$cell, queen=FALSE)
+plot(rook_nb, coords, add=TRUE, col="green", cex=0.5)
+```
+
+Text Block L
+
+```{r africa_maps_2, fig.width=7, fig.height=7, fig.align="center"}
+neighbors_horizontal <- function(centroids) {
+  
+  # Extract latitudes
+  latitudes <- st_coordinates(centroids)[,2]
+  distances <- st_distance(centroids)
+  
+  # Initialize a matrix to store horizontal neighbors
+  num_points <- nrow(centroids)
+  horizontal_neighbors <- matrix(0, nrow = num_points, ncol = num_points)
+  
+  for (i in seq_len(num_points)) {
+    # Find points within the same latitude band
+    neighbor_ids <- which(round(latitudes,2) == round(latitudes[i],2) & distances[i,] < set_units(180000, "m"))
+    
+    # Store neighbor ids in the matrix
+    horizontal_neighbors[i, neighbor_ids] <- 1
+    
+    }
+  
+  # Convert the matrix to a listw object
+  listw <- mat2listw(horizontal_neighbors, style="B", zero.policy = TRUE)
+  
+  return(listw)
+}
+
+neighbors_vertical <- function(centroids) {
+  
+  longitudes <- st_coordinates(centroids)[,1]
+  distances <- st_distance(centroids)
+  
+  # Initialize a matrix to store vertical neighbors
+  num_points <- nrow(centroids)
+  vertical_neighbors <- matrix(0, nrow = num_points, ncol = num_points)
+  
+  for (i in seq_len(num_points)) {
+    
+    neighbor_ids <- which(round(longitudes,2) == round(longitudes[i],2) & distances[i,] < set_units(180000, "m"))
+    
+    # Store neighbor ids in the matrix
+    vertical_neighbors[i, neighbor_ids] <- 1
+  }
+  
+  # Convert the matrix to a listw object
+  listw <- mat2listw(vertical_neighbors, style="B", zero.policy = TRUE)
+  
+  return(listw)
+}
+
+# Apply the functions   
+horizontal <- neighbors_horizontal(st_centroid(coor))
+vertical <- neighbors_vertical(st_centroid(coor))
+
+# Try visualize network to see if correct
+plot(st_geometry(coor))
+coords <- st_coordinates(st_centroid(coor))
+plot(horizontal, coords, add=TRUE, col="blue", cex=0.5)
+plot(vertical, coords, add=TRUE, col="red", cex=0.5)
+```
+
+Text Block M
 
 ## Describe the Unit of Observation
 

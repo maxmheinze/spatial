@@ -4,7 +4,7 @@
 \contentsline {subsection}{Distance Decay SLX}{4}{section*.5}%
 \contentsline {subsection}{Bonus question}{9}{section*.6}%
 \contentsline {section}{Task B}{11}{section*.7}%
-\contentsline {subsection}{Describe the Unit of Observation}{11}{section*.8}%
-\contentsline {subsubsection}{What are their areas?}{11}{section*.9}%
-\contentsline {subsubsection}{Why and to which (relative) extent do they differ?}{11}{section*.10}%
-\contentsline {subsection}{Un-normalized weights matrix and its effects on interpretations}{11}{section*.11}%
+\contentsline {subsection}{Describe the Unit of Observation}{17}{section*.8}%
+\contentsline {subsubsection}{What are their areas?}{17}{section*.9}%
+\contentsline {subsubsection}{Why and to which (relative) extent do they differ?}{17}{section*.10}%
+\contentsline {subsection}{Un-normalized weights matrix and its effects on interpretations}{17}{section*.11}%

@@ -123,8 +123,8 @@ summary(model_4)
 
 
 # VERTICAL HORIZONTAL CONTIGUITY -----------------------------------------------
-'The horizontal (vertical) contiguity matrix means that only cells which share
-the same latitude (longitude) are considered to be adjacent.'
+# The horizontal (vertical) contiguity matrix means that only cells which share
+# the same latitude (longitude) are considered to be adjacent.
 
 plot(st_geometry(coor))
 coords <- st_coordinates(st_centroid(coor))
@@ -188,3 +188,4 @@ plot(st_geometry(coor))
 coords <- st_coordinates(st_centroid(coor))
 plot(horizontal, coords, add=TRUE, col="blue", cex=0.5)
 plot(vertical, coords, add=TRUE, col="red", cex=0.5)
+
