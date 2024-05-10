@@ -241,7 +241,7 @@ model_4_hor <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4p
                   W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_use_primary) + W_dis_river_cell + 
                   as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
                   as.factor(countryyear),
-                data = df_2,
+                data = df_4,
                 index= c("cell", "year_"),
                 listw = horizontal,
                 model="pooling",
@@ -263,7 +263,7 @@ model_4_ver <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4p
                   W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_use_primary) + W_dis_river_cell + 
                   as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
                   as.factor(countryyear),
-                data = df_2,
+                data = df_4,
                 index= c("cell", "year_"),
                 listw = vertical,
                 model="pooling",

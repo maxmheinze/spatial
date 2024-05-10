@@ -602,11 +602,11 @@ cat("\\end{center}")
 Overall, the replication is satisfactory for the OLS columns, but in the case of the spatial dynamic models, results are not comparable to those of the Authors'
 
 ```{r print_col_3, echo = FALSE}
-knitr::kable(summary(model_3)$CoefTable[1:14,], caption = "Replication of Column 3.", format = "simple")
+knitr::kable(rbind(summary(model_3)$ARCoefTable, summary(model_3)$CoefTable[1:14,]), caption = "Replication of Column 3.", format = "simple")
 ```
 
 ```{r print_col_4, echo = FALSE}
-knitr::kable(summary(model_4)$CoefTable[1:14,], caption = "Replication of Column 4.", format = "simple")
+knitr::kable(rbind(summary(model_4)$ARCoefTable, summary(model_4)$CoefTable[1:14,]), caption = "Replication of Column 4.", format = "simple")
 ```
 
 ## Vertical - Horizontal Contiguity
@@ -677,29 +677,120 @@ The concept of a horizontal/vertical contiguity matrix suggests that only cells 
 
 One could argue that while this approach may seem overly simplistic, it could find utility in contexts characterized by pronounced regional disparities, such as countries with stark differences between north and south, like Italy, or between west and east, like Germany. In such cases, the matrix's structure might help capture and model the distinct dynamics of these regions, still with the acknowledgment of its limitations in representing more complex interaction patterns.
 
+```{r horver_models, eval = FALSE}
+model_3_hor <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
+                  dis_river_cell + as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF +
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_border) +
+                  as.factor(W_use_primary) + W_dis_river_cell + as.factor(W_shared) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(country_):as.numeric(year_),
+                data = df_1,
+                index= c("cell","year_"),
+                listw = horizontal,
+                model="pooling",
+                effect = "time",
+                spatial.error = "none", 
+                zero.policy = TRUE, 
+                lag=TRUE,
+                dynamic = TRUE,
+                local=list( parallel = T))
+
+model_3_ver <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + 
+                  dis_river_cell + as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF +
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_border) +
+                  as.factor(W_use_primary) + W_dis_river_cell + as.factor(W_shared) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(country_):as.numeric(year_),
+                data = df_1,
+                index= c("cell","year_"),
+                listw = vertical,
+                model="pooling",
+                effect = "time",
+                spatial.error = "none", 
+                zero.policy = TRUE, 
+                lag=TRUE,
+                dynamic = TRUE,
+                local=list( parallel = T))
+
+model_4_hor <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + dis_river_cell + 
+                  as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF + 
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_use_primary) + W_dis_river_cell + 
+                  as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(countryyear),
+                data = df_4,
+                index= c("cell", "year_"),
+                listw = horizontal,
+                model="pooling",
+                effect = "individual",
+                spatial.error="none",
+                zero.policy = TRUE,
+                dynamic = TRUE,
+                lag = TRUE, 
+                Hess = TRUE,
+                local=list( parallel = T))
+
+model_4_ver <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + L2_SPEI4pg + 
+                  GSmain_ext_SPEI4pg + L1_GSmain_ext_SPEI4pg + L2_GSmain_ext_SPEI4pg +
+                  W_SPEI4pg + W_L1_SPEI4pg + W_L2_SPEI4pg +
+                  W_GSmain_ext_SPEI4pg + W_L1_GSmain_ext_SPEI4pg + W_L2_GSmain_ext_SPEI4pg +
+                  elevation_cell + rough_cell + area_cell + as.factor(use_primary) + dis_river_cell + 
+                  as.factor(shared) + as.factor(border) + as.factor(any_mineral) + ELF + 
+                  W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_use_primary) + W_dis_river_cell + 
+                  as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
+                  as.factor(countryyear),
+                data = df_4,
+                index= c("cell", "year_"),
+                listw = vertical,
+                model="pooling",
+                effect = "individual",
+                spatial.error="none",
+                zero.policy = TRUE,
+                dynamic = TRUE,
+                lag = TRUE, 
+                Hess = TRUE,
+                local=list( parallel = T))
+
+
+saveRDS(model_3_hor, "./assignment3/intermediate_output/model_3_hor.RDS")
+saveRDS(model_3_ver, "./assignment3/intermediate_output/model_3_ver.RDS")
+saveRDS(model_4_hor, "./assignment3/intermediate_output/model_4_hor.RDS")
+saveRDS(model_4_ver, "./assignment3/intermediate_output/model_4_ver.RDS")
+```
+
+```{r load_horver_models, include=FALSE}
+model_3_hor <- readRDS("./assignment3/intermediate_output/model_3_hor.RDS")
+model_3_ver <- readRDS("./assignment3/intermediate_output/model_3_ver.RDS")
+model_4_hor <- readRDS("./assignment3/intermediate_output/model_4_hor.RDS")
+model_4_ver <- readRDS("./assignment3/intermediate_output/model_4_ver.RDS")
+```
+
+```{r print_col_3hor, echo = FALSE}
+knitr::kable(rbind(summary(model_3_hor)$ARCoefTable, summary(model_3_hor)$CoefTable[1:14,]), caption = "The model from Column 3 with a horizontal contiguity matrix.", format = "simple")
+```
+
+```{r print_col_3ver, echo = FALSE}
+knitr::kable(rbind(summary(model_3_ver)$ARCoefTable, summary(model_3_ver)$CoefTable[1:14,]), caption = "The model from Column 3 with a vertical contiguity matrix.", format = "simple")
+```
+
+```{r print_col_4hor, echo = FALSE}
+knitr::kable(rbind(summary(model_4_hor)$ARCoefTable, summary(model_4_hor)$CoefTable[1:14,]), caption = "The model from Column 4 with a horizontal contiguity matrix.", format = "simple")
+```
+
+```{r print_col_4ver, echo = FALSE}
+knitr::kable(rbind(summary(model_4_ver)$ARCoefTable, summary(model_4_ver)$CoefTable[1:14,]), caption = "The model from Column 4 with a vertical contiguity matrix.", format = "simple")
+```
+
 *Add last bullet point!*
-
-## Describe the Unit of Observation
-
-The unit of observation is defined in the paper as *grid cells* at a sub-national level in Africa, with each single cell as one unit of observation. Each of these cells within the grid system represents a certain area on the African map. For the analysis, a panel data set is used that comprises around 2700 cells in 46 African countries from 1997 to 2011, including various geo-referenced covariates. Within the units of observation, different types of data are aggregated (conflict data, climate data, as well as supplementary data on infrastructure and ethnic fractionalization, to give just a few examples). 
-
-### What are their areas?
-
-Each of these cells has a resolution of 1 degree latitude $\times$ 1 degree longitude (which corresponds to about 110 km $\times$ 110 km at the equator, see also the next point on relative differences in sizes of the cells). The validation of the resolution (1 degree resolution) is carried out by the authors through a robustness analysis with higher and lower spatial scales, in which they look at both a higher resolution 0.5 $\times$ 0.5 degree grid as well as a lower resolution with a 2 $\times$ 2 grid in addition to the chosen 1 degree resolution. The aim is to find a good balance between the degree of localization of agricultural shocks and the detection of the extent of conflict spillovers. As can be seen from the online appendix, and what is interesting for the interpretation of the area of the units of observations, the authors in their analysis also calculate the area of each cell in square kilometers corresponding to the land, excluding seas and lakes. Furthermore, cell-level controls such as elevation, roughness, or altitude are also taken into account. 
-
-### Why and to which (relative) extent do they differ?
-
-One possible reason for potential relative differences in the areas of each cell is the spherical shape of the Earth. Since the earth is a sphere and not a two-dimensional surface, a 1 $\times$ 1-degree grid cell does not correspond to an area of 110 km $\times$ 110 km everywhere on the globe. As the Earth is a globe, the longitudes converge at the poles. The horizontal distance (from East to West, i.e. the width of a cell) from one longitude to the next longitude becomes smaller the further you move from the equator to the poles (to the North or South). However, the distance between the lines of latitude, which run parallel, remains roughly constant across the globe. So while around the equator a 1 degree $\times$ 1 degree cell area has about 12100 squared kilometers (110 km $\times$ 110 km), the area of a 1 degree $\times$ 1 degree cell deviates and decreases the further you move towards the poles (as the East-West distance of the cell decreases). As the equator runs through Africa, the areas of 1 $\times$ 1 degree cells in Central Africa are larger than those in North and South Africa (as these cells are not located on/around the equator but located further towards the poles, where eventually the width of a cell would converge to zero).
-
-Furthermore, as taken into account in the analysis, the area of each cell in squared kilometers of land (and thus excluding seas and lakes), depends on the occurrence/proportion of standing or flowing waters in a cell. The presence of roughness, hills, or mountains can also influence the area surface. The areas can therefore differ depending on various conditions and environmental factors of a cell. The area of a 110 km $times$ 110 km square can, additionally and to mention a third reason, in general vary depending on the map and projection used. This is because distances and areas can deviate according to the projection used in an analysis due to distortion. 
-
-
-## Un-normalized weights matrix and its effects on interpretations
-
-The weights matrix *W* used in the paper is a binary contiguity matrix, which is not normalized. All cells surrounding the cell of interest (neighboring cells being defined as being within a distance threshold of 180km) are assigned a value/weight of 1 and all other cells are assigned a value/weight of 0. In this case, the 8 adjacent cells are effectively considered neighbors (this is also called queen contiguity). More precisely, the average cell in the sample has 7.4 neighbors (since the cells on the edges no longer have 8 neighbors). Due to the binarity of the matrix, there is no further variation in influence based on the exact distance (either a cell is a neighbor of the cell of interest and thus has influence or not). As the matrix is not normalized, the sum of the values/weights in each row is not equal to 1, as is the case in the usual row-normalized matrix. The influence of each adjacent cell is taken into account equally and the cumulative effects of all neighbors are summed directly in the analysis. The influence of a certain cell on the cell of interest therefore does not depend on how many other neighbors the cell of interest has. The decision to use a non-normalized weights matrix was made by the authors to simplify the interpretation, as the coefficients of the spatial lags can be directly interpreted as the effects of a marginal change in a particular variable in one of the neighbors. 
-
-The spatial econometric model thus captures the total influence of those units that are considered neighboring, whereby each coefficient of a neighboring cell with a change can be interpreted as the total additional effect of this one other neighboring cell. Therefore, the coefficients on spatially lagged variables show cumulative and not averaged effects of changes in neighboring cells. In contrast, a normalized weights matrix (more precisely, a row-normalized weights matrix) shows the average influence of all neighbors. The coefficients for spatial lags can thus be interpreted directly as the effects of a change in a neighbor on the dependent variable in the cell of interest, and hence the authors' decision to use the chosen matrix *W* for simplicity reasons. Specifically, the coefficient for spatially lagged variables gives a direct interpretation for the effect on the cell of interest of a change in, say, conflict frequency or weather shocks in one or more neighboring cells. 
-
-What is also important to mention is that this un-weighted weights matrix tends to be sensitive to the number of identified neighbors. The cumulative influence of neighboring cells can potentially be more significant and the coefficients larger if the cell of interest has a higher number neighbors (more neighbors means higher cumulative influence, which then says very little about the average effect of a change in a neighbor). However, since the weights matrix *W* is binary (no further weighting) and most cells have exactly 8 neighbors (with the exception of border cells) as well as the fact that the average number of neighbors is quite close to the 8 neighbors at 7.4, this possible distortion due to different numbers of neighbors is moderate, a comparison of the cells is largely possible or the issue only needs to be taken into account, if at all, when a comparison is made with border cells. 
+ 
 
 \newpage
