@@ -409,7 +409,29 @@ The distance decay parameter derived using the out_slxdx output and therefore Ba
 
 # Task B
 
-Text Block A
+## Describe the Unit of Observation
+
+The unit of observation is defined in the paper as *grid cells* at a sub-national level in Africa, with each single cell as one unit of observation. Each of these cells within the grid system represents a certain area on the African map. For the analysis, a panel data set is used that comprises around 2700 cells in 46 African countries from 1997 to 2011, including various geo-referenced covariates. Within the units of observation, different types of data are aggregated (conflict data, climate data, as well as supplementary data on infrastructure and ethnic fractionalization, to give just a few examples). 
+
+### What are their areas?
+
+Each of these cells has a resolution of 1 degree latitude $\times$ 1 degree longitude (which corresponds to about 110 km $\times$ 110 km at the equator, see also the next point on relative differences in sizes of the cells). The validation of the resolution (1 degree resolution) is carried out by the authors through a robustness analysis with higher and lower spatial scales, in which they look at both a higher resolution 0.5 $\times$ 0.5 degree grid as well as a lower resolution with a 2 $\times$ 2 grid in addition to the chosen 1 degree resolution. The aim is to find a good balance between the degree of localization of agricultural shocks and the detection of the extent of conflict spillovers. As can be seen from the online appendix, and what is interesting for the interpretation of the area of the units of observations, the authors in their analysis also calculate the area of each cell in square kilometers corresponding to the land, excluding seas and lakes. Furthermore, cell-level controls such as elevation, roughness, or altitude are also taken into account. 
+
+### Why and to which (relative) extent do they differ?
+
+One possible reason for potential relative differences in the areas of each cell is the spherical shape of the Earth. Since the earth is a sphere and not a two-dimensional surface, a 1 $\times$ 1-degree grid cell does not correspond to an area of 110 km $\times$ 110 km everywhere on the globe. As the Earth is a globe, the longitudes converge at the poles. The horizontal distance (from East to West, i.e. the width of a cell) from one longitude to the next longitude becomes smaller the further you move from the equator to the poles (to the North or South). However, the distance between the lines of latitude, which run parallel, remains roughly constant across the globe. So while around the equator a 1 degree $\times$ 1 degree cell area has about 12100 squared kilometers (110 km $\times$ 110 km), the area of a 1 degree $\times$ 1 degree cell deviates and decreases the further you move towards the poles (as the East-West distance of the cell decreases). As the equator runs through Africa, the areas of 1 $\times$ 1 degree cells in Central Africa are larger than those in North and South Africa (as these cells are not located on/around the equator but located further towards the poles, where eventually the width of a cell would converge to zero).
+
+Furthermore, as taken into account in the analysis, the area of each cell in squared kilometers of land (and thus excluding seas and lakes), depends on the occurrence/proportion of standing or flowing waters in a cell. The presence of roughness, hills, or mountains can also influence the area surface. The areas can therefore differ depending on various conditions and environmental factors of a cell. The area of a 110 km $times$ 110 km square can, additionally and to mention a third reason, in general vary depending on the map and projection used. This is because distances and areas can deviate according to the projection used in an analysis due to distortion. 
+
+## Un-normalized weights matrix and its effects on interpretations
+
+The weights matrix *W* used in the paper is a binary contiguity matrix, which is not normalized. All cells surrounding the cell of interest (neighboring cells being defined as being within a distance threshold of 180km) are assigned a value/weight of 1 and all other cells are assigned a value/weight of 0. In this case, the 8 adjacent cells are effectively considered neighbors (this is also called queen contiguity). More precisely, the average cell in the sample has 7.4 neighbors (since the cells on the edges no longer have 8 neighbors). Due to the binarity of the matrix, there is no further variation in influence based on the exact distance (either a cell is a neighbor of the cell of interest and thus has influence or not). As the matrix is not normalized, the sum of the values/weights in each row is not equal to 1, as is the case in the usual row-normalized matrix. The influence of each adjacent cell is taken into account equally and the cumulative effects of all neighbors are summed directly in the analysis. The influence of a certain cell on the cell of interest therefore does not depend on how many other neighbors the cell of interest has. The decision to use a non-normalized weights matrix was made by the authors to simplify the interpretation, as the coefficients of the spatial lags can be directly interpreted as the effects of a marginal change in a particular variable in one of the neighbors. 
+
+The spatial econometric model thus captures the total influence of those units that are considered neighboring, whereby each coefficient of a neighboring cell with a change can be interpreted as the total additional effect of this one other neighboring cell. Therefore, the coefficients on spatially lagged variables show cumulative and not averaged effects of changes in neighboring cells. In contrast, a normalized weights matrix (more precisely, a row-normalized weights matrix) shows the average influence of all neighbors. The coefficients for spatial lags can thus be interpreted directly as the effects of a change in a neighbor on the dependent variable in the cell of interest, and hence the authors' decision to use the chosen matrix *W* for simplicity reasons. Specifically, the coefficient for spatially lagged variables gives a direct interpretation for the effect on the cell of interest of a change in, say, conflict frequency or weather shocks in one or more neighboring cells. 
+
+What is also important to mention is that this un-weighted weights matrix tends to be sensitive to the number of identified neighbors. The cumulative influence of neighboring cells can potentially be more significant and the coefficients larger if the cell of interest has a higher number neighbors (more neighbors means higher cumulative influence, which then says very little about the average effect of a change in a neighbor). However, since the weights matrix *W* is binary (no further weighting) and most cells have exactly 8 neighbors (with the exception of border cells) as well as the fact that the average number of neighbors is quite close to the 8 neighbors at 7.4, this possible distortion due to different numbers of neighbors is moderate, a comparison of the cells is largely possible or the issue only needs to be taken into account, if at all, when a comparison is made with border cells. 
+
+## Replication Tables
 
 ```{r setup_task_b, include = FALSE}
 pacman::p_load(spatialreg, bsreg, patchwork,
@@ -422,7 +444,7 @@ pacman::p_load(spatialreg, bsreg, patchwork,
                haven, flextable, broom, units)
 ```
 
-Text Block B
+For the replication of Table 2 from the paper we prepare the dataset by removing one year of observation to have the same size of theirs, besides transforming into factors some key variables.
 
 ```{r prepare_data_b, include = FALSE, cache = TRUE}
 intersect_coord <- read_dta("./assignment3/data/harari/intersect_coord.dta")
@@ -446,7 +468,7 @@ df_1 <- merge(geoconflict_main, raster, by = c("_ID","lat", "lon")) %>%
          cell = as.factor(cell))
 ```
 
-Text Block C
+For the replication of the first column we employed the `plm()` regression given we are dealing with observations on multiple countries observed over multiple time periods.
 
 ```{r b_model_1, eval = FALSE, cache=TRUE}
 model_1 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
@@ -465,7 +487,7 @@ saveRDS(model_1, "./assignment3/intermediate_output/model_1.RDS")
 model_1 <- readRDS("./assignment3/intermediate_output/model_1.RDS")
 ```
 
-Text Block D
+For the replication of the second column, we extended the first mode to include also the vector of observations weighted by the matrix W.
 
 ```{r b_model_2, eval = FALSE, cache=TRUE}
 model_2 <- plm(ANY_EVENT_ACLED ~ SPEI4pg + L1_SPEI4pg + L2_SPEI4pg +
@@ -488,7 +510,7 @@ saveRDS(model_2, "./assignment3/intermediate_output/model_2.RDS")
 model_2 <- readRDS("./assignment3/intermediate_output/model_2.RDS")
 ```
 
-Text Block E
+For the replication of the third column we start by building the contiguity matrix with the paper's threshold of 180 km radius.
 
 ```{r b_model_3_prepare}
 coor <- df_1 %>%
@@ -498,7 +520,6 @@ coor <- df_1 %>%
 
 distw <- dnearneigh(st_centroid(coor), 0, 180, row.names = coor$cell)
 W <- nb2listw(distw, style = "B", zero.policy = TRUE) 
-distmat <- listw2mat(W)
 ```
 
 ```{r b_model_3, eval = FALSE}
@@ -529,10 +550,10 @@ saveRDS(model_3, "./assignment3/intermediate_output/model_3.RDS")
 model_3 <- readRDS("./assignment3/intermediate_output/model_3.RDS")
 ```
 
-Text Block F
+For the last column 4, we include the country*year fixed effect, and leave out the year and country-specific time-trend controls. Differently from before in Model 3, `year_` is given in levels, rather than in numeric form. In this way one obtains the interaction term FE whereas in the other way one makes the country-specific time-trend.
 
 ```{r b_model_4, eval = FALSE, cache=TRUE}
-df_4 <- df_1 %>%
+df_2 <- df_1 %>%
   mutate(countryyear = paste0(country_, "_", year_))
 
 
@@ -546,7 +567,7 @@ model_4 <- spml(ANY_EVENT_ACLED ~ lag(ANY_EVENT_ACLED) + SPEI4pg + L1_SPEI4pg + 
                   W_elevation_cell + W_rough_cell + W_area_cell + as.factor(W_use_primary) + W_dis_river_cell + 
                   as.factor(W_shared)  + as.factor(W_border) + as.factor(W_any_mineral) + W_ELF +
                   as.factor(countryyear),
-                data = df_4,
+                data = df_2,
                 index= c("cell", "year_"),
                 listw = W,
                 model="pooling",
@@ -565,8 +586,6 @@ saveRDS(model_4, "./assignment3/intermediate_output/model_4.RDS")
 model_4 <- readRDS("./assignment3/intermediate_output/model_4.RDS")
 ```
 
-Text Block G
-
 ```{r print_cols_1_2, echo = FALSE, results = "asis"}
 cat("\\begin{center}")
 stargazer(model_1, model_2, 
@@ -580,28 +599,19 @@ stargazer(model_1, model_2,
 cat("\\end{center}")
 ```
 
-Text Block H
+Overall, the replication is satisfactory for the OLS columns, but in the case of the spatial dynamic models, results are not comparable to those of the Authors'
 
 ```{r print_col_3, echo = FALSE}
 knitr::kable(summary(model_3)$CoefTable[1:14,], caption = "Replication of Column 3.", format = "simple")
 ```
 
-Text Block J
-
 ```{r print_col_4, echo = FALSE}
 knitr::kable(summary(model_4)$CoefTable[1:14,], caption = "Replication of Column 4.", format = "simple")
 ```
 
-Text Block K
+## Vertical - Horizontal Contiguity
 
-```{r africa_maps_1, fig.width=7, fig.height=7, fig.align="center"}
-plot(st_geometry(coor))
-coords <- st_coordinates(st_centroid(coor))
-rook_nb <- poly2nb(coor, row.names=coor$cell, queen=FALSE)
-plot(rook_nb, coords, add=TRUE, col="green", cex=0.5)
-```
-
-Text Block L
+For the second part of the Assignment, when asked to build the vertical-horizontal contiguity matrix, we set up the following functions, `neighbors_horizontal` and `neighbors_vertical`. The former (latter) computes horizontal (vertical) neighbors for a set of points represented by their centroids. It starts by extracting the latitudes (longitudes) of the centroids and calculating the distances between all pairs of centroids. Then, it iterates over each centroid, identifying other centroids within the same latitude (longitude) band and within a specified distance threshold. It stores this information in a matrix where each row represents a centroid and each column indicates whether another centroid is a horizontal (vertical) neighbor. Finally, it converts this matrix into a spatial weights list object and returns it.
 
 ```{r africa_maps_2, fig.width=7, fig.height=7, fig.align="center"}
 neighbors_horizontal <- function(centroids) {
@@ -616,7 +626,7 @@ neighbors_horizontal <- function(centroids) {
   
   for (i in seq_len(num_points)) {
     # Find points within the same latitude band
-    neighbor_ids <- which(round(latitudes,2) == round(latitudes[i],2) & distances[i,] < set_units(180000, "m"))
+    neighbor_ids <- which(round(latitudes,2) == round(latitudes[i],2) & distances[i,] < set_units(180000, "m")) # keep threshold from text
     
     # Store neighbor ids in the matrix
     horizontal_neighbors[i, neighbor_ids] <- 1
@@ -656,14 +666,18 @@ neighbors_vertical <- function(centroids) {
 horizontal <- neighbors_horizontal(st_centroid(coor))
 vertical <- neighbors_vertical(st_centroid(coor))
 
-# Try visualize network to see if correct
+# Visualization to check correctness
 plot(st_geometry(coor))
 coords <- st_coordinates(st_centroid(coor))
 plot(horizontal, coords, add=TRUE, col="blue", cex=0.5)
-plot(vertical, coords, add=TRUE, col="red", cex=0.5)
+plot(vertical, coords, add=TRUE, col="red", cex=0.5) #all good!
 ```
 
-Text Block M
+The concept of a horizontal/vertical contiguity matrix suggests that only cells sharing the same latitude or longitude and directly neighboring each other affect one another. This assumption lacks a clear rationale when considering real-world dynamics, as there's no inherent reason to believe effects propagate in such a uni-directional manner, except that of limiting propagation of an effect.
+
+One could argue that while this approach may seem overly simplistic, it could find utility in contexts characterized by pronounced regional disparities, such as countries with stark differences between north and south, like Italy, or between west and east, like Germany. In such cases, the matrix's structure might help capture and model the distinct dynamics of these regions, still with the acknowledgment of its limitations in representing more complex interaction patterns.
+
+*Add last bullet point!*
 
 ## Describe the Unit of Observation
 
@@ -687,8 +701,5 @@ The weights matrix *W* used in the paper is a binary contiguity matrix, which is
 The spatial econometric model thus captures the total influence of those units that are considered neighboring, whereby each coefficient of a neighboring cell with a change can be interpreted as the total additional effect of this one other neighboring cell. Therefore, the coefficients on spatially lagged variables show cumulative and not averaged effects of changes in neighboring cells. In contrast, a normalized weights matrix (more precisely, a row-normalized weights matrix) shows the average influence of all neighbors. The coefficients for spatial lags can thus be interpreted directly as the effects of a change in a neighbor on the dependent variable in the cell of interest, and hence the authors' decision to use the chosen matrix *W* for simplicity reasons. Specifically, the coefficient for spatially lagged variables gives a direct interpretation for the effect on the cell of interest of a change in, say, conflict frequency or weather shocks in one or more neighboring cells. 
 
 What is also important to mention is that this un-weighted weights matrix tends to be sensitive to the number of identified neighbors. The cumulative influence of neighboring cells can potentially be more significant and the coefficients larger if the cell of interest has a higher number neighbors (more neighbors means higher cumulative influence, which then says very little about the average effect of a change in a neighbor). However, since the weights matrix *W* is binary (no further weighting) and most cells have exactly 8 neighbors (with the exception of border cells) as well as the fact that the average number of neighbors is quite close to the 8 neighbors at 7.4, this possible distortion due to different numbers of neighbors is moderate, a comparison of the cells is largely possible or the issue only needs to be taken into account, if at all, when a comparison is made with border cells. 
-
-
-
 
 \newpage
