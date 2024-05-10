@@ -326,7 +326,7 @@ $$
 
 ## Bonus question
 
-First of all, it should be noted that the bonus question largely refers to the paper by \textcite{kuschnig2022}. Thereby, parts of it are replicated in this exercise to answer the question asked in the task assignment. In order to have the same initial data, the first step is therefore to reload the data used in this exercise in a way that is identical to the specifications used in the paper. 
+First of all, it should be noted that the bonus question largely refers to the paper by \textcite{kuschnig2022}. Thereby, parts of it are replicated in this exercise to answer the question asked in the task assignment. In order to have the same initial datasets, the first step is therefore to reload the data used in this exercise in a way that is identical to the specifications used in the paper. 
 
 ```{r Bonus data, include=FALSE}
 cigs <- read_excel("./assignment3/data/cigarettes/cigarette+2var.xls") %>%
@@ -348,8 +348,8 @@ dist <- as.matrix(dist(cigd))
 diag(dist) <- Inf 
 
 Psi <- function(delta) {
-  W_dist <- dist ^ (-delta) # Build
-  W_dist <- W_dist / max(eigen(W_dist, symmetric = TRUE)$values) # Scale
+  W_dist <- dist ^ (-delta)
+  W_dist <- W_dist / max(eigen(W_dist, symmetric = TRUE)$values)
   kronecker(diag(years_numb), W_dist)
 }
 
@@ -369,9 +369,9 @@ out_slxdx <- bslx(y ~ X, W = Psi, X_SLX = X_lag,
 
 ```
 
-Following the paper and the R code provided on github, we calculate the number of unique years in the dataset to then create a spatial contiguity matrix by applying the Kronecker product to the identity matrix of the years (diag(years_numb)) and normalizing the weights. To create the inverse-distance decay function, we compute the pairwise distances between the states using the Euclidean distance, whereby the diagonal is set to infinity (diagonal elements will be 0) to prevent self-connections. The function *Psi* then takes delta as a parameter and defines the weights matrix $1/dist^{\delta}$, scales the matrix by the maximum eigenvalue to standardize it and applies the Kronecker product with the identity matrix of the years to expand for the panel data.
+Following the paper and the R code provided on github, we calculate the number of unique years in the dataset to then create a spatial contiguity matrix by applying the Kronecker product to the identity matrix of the years (diag(years_numb)) and the row-normalized weights. To create the inverse-distance decay function, we compute the pairwise distances between the states using the Euclidean distance, where then the diagonal is set to infinity (diagonal elements will be 0) to prevent self-connections. The function *Psi* then takes delta as a parameter and defines the weights matrix $1/dist^{\delta}$, scales the matrix by the maximum eigenvalue and applies the Kronecker product with the identity matrix of the years to expand for the panel data.
 
-We then create a response variable matrix *y* with the log of cigarette consumption as well as construct the model matrix *X*, including logged cigarette prices, logged income, and fixed effects for year and state (as stated in the task assignment). Creating *X_lag*, we extract the relevant columns for the spatial lags of prices and income and calculate the spatially lagged explanatory variables by performing a matrix multiplication of *W_cont* with *X_lag*. In a next step, we fit the SLX model using the bslx function. We define the model formula, provide the function for the distance decay weights matrix, specify the explanatory variables for spatial lags, set the number of posterior draws, as well as provide settings/otpions for the SLX model following the specifications from the github code. In a next step, we fit the SLX model using the bslx function. We define the model formula, provide the function for the distance decay weights matrix, specify the explanatory variables for spatial lags, set the number of posterior draws, as well as provide settings/otpions for the SLX model (including prior parameters for the distance decay parameter) following the specifications from the github code. We specify the starting value for the decay parameter in the Markov Chain Monte Carlo sampler, which then iteratively updates this value based on the posterior distribution obtained through sampling. We also specify the prior distribution for $\delta$, indicating the shape of the inverse-gamma prior distribution. 
+We then create a response variable matrix *y* with the log of cigarette consumption as well as construct the model matrix *X*, which shows the model specification / regression equation, including logged cigarette prices, logged income, and fixed effects for year and state (as stated in the task assignment). Creating *X_lag*, we extract the relevant columns for the spatial lags of prices and income and calculate the spatially lagged explanatory variables by performing a matrix multiplication of *W_cont* with *X_lag*. In a next step, we fit the SLX model using the bslx function. We define the model formula, provide the function for the distance decay weights matrix, specify the explanatory variables for spatial lags, set the number of posterior draws, as well as provide settings/options for the SLX model (including prior parameters for the distance decay parameter) following the specifications from the github code. We specify the starting value for the decay parameter in the Markov Chain Monte Carlo sampler, which then iteratively updates this value based on the posterior distribution obtained through sampling. We also specify the prior distribution for $\delta$, indicating the shape of the inverse-gamma prior distribution. 
 
 The following table shows the estimate (mean) for the distance decay parameter $\delta$ as well as a 99\% confidence interval derived with the *coda* package:
 
@@ -402,7 +402,7 @@ The distance decay parameter derived using the out_slxdx output and therefore Ba
 
 ## Describe the Unit of Observation
 
-The unit of observation is defined in the paper as *grid cells* at a sub-national level in Africa, with each single cell as one unit of observation. Each of these cells within the grid system represents a certain area on the African map. For the analysis, a panel data set is used that comprises around 2700 cells in 46 African countries from 1997 to 2011, including various geo-referenced covariates. Within the units of observation (cells), different types of data are aggregated (conflict data, climate data, as well as supplementary data on infrastructure and ethnic fractionalization, to give just a few examples). 
+The unit of observation is defined in the paper as *grid cells* at a sub-national level in Africa, with each single cell as one unit of observation. Each of these cells within the grid system represents a certain area on the African map. For the analysis, a panel data set is used that comprises around 2700 cells in 46 African countries from 1997 to 2011, including various geo-referenced covariates. Within the units of observation, different types of data are aggregated (conflict data, climate data, as well as supplementary data on infrastructure and ethnic fractionalization, to give just a few examples). 
 
 ### What are their areas?
 
