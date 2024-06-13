@@ -1,0 +1,244 @@
+---
+title: '**Spatial Economics -- Assignment 4**'
+author: 
+  - "Max Heinze (h11742049@s.wu.ac.at)"
+date: "June 16, 2024"
+output: 
+  pdf_document:
+    toc: true
+    citation_package: biblatex
+    includes:
+      in_header: !expr file.path(rprojroot::find_rstudio_root_file(), "helper", "wrap_code.tex")
+bibliography: references.bib
+biblio-style: apa
+header-includes: 
+  - \usepackage{tcolorbox}
+  - \usepackage{graphicx}
+  - \usepackage{booktabs}
+  - \usepackage[default]{lato}
+papersize: a4
+geometry: margin = 2cm
+urlcolor: DarkOrchid!65!black
+citecolor: DarkOrchid!65!black
+---
+
+```{r, setup, include = FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 80), tidy = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(showtext)
+font_add_google("Lato", "Lato")
+showtext_auto()
+```
+
+\vspace{2em}
+
+\begin{tcolorbox}
+\centering \itshape The executable code that was used in compiling the assignment is available on GitHub at \url{https://github.com/maxmheinze/spatial}.
+\end{tcolorbox}
+
+\newpage
+
+# Task A
+
+```{r, warning = FALSE, message = FALSE, echo = FALSE, fig.dim = c(8, 6), out.width="100%", fig.align="center"}
+
+# Header ------------------------------------------------------------------
+
+pacman::p_load(
+  tidyverse,
+  magrittr,
+  sf,
+  tmap,
+  ceramic,
+  ggplot2,
+  ggspatial,
+  basemaps
+)
+
+muni <- st_read("./assignment4/data/brazil_muni.gpkg", quiet = TRUE)
+datl <- read_rds("./assignment4/data/data_legal-amazon.rds")
+slau <- read_rds("./assignment4/data/slaughterhouses.rds")
+
+sf_use_s2(FALSE)
+
+
+# Data Manipulation -------------------------------------------------------
+
+mapd <- muni %>%
+  right_join(datl, by = "muni_id")
+
+slau <- st_intersection(slau, mapd) %>%
+  mutate(slau = "Slaughterhouse")
+
+mpd1 <- mapd %>%
+  st_drop_geometry() %>%
+  arrange(year) %>%
+  group_by(muni_id) %>%
+  summarize(forest_change = 100*(last(forest)/first(forest)-1)) %>%
+  left_join(muni) %>%
+  st_as_sf()
+
+
+# Map ---------------------------------------------------------------------
+
+tm_shape(mpd1) +
+  tm_fill("forest_change", palette = "RdBu", style = "order", 
+          legend.reverse = TRUE, title = "       Forest Change from 2003 to 2022", 
+          labels = c("", "most forest lost", "", "", "", "least forest lost", ""),
+          legend.is.portrait = FALSE) +
+  tm_borders(lwd = 0.1, col = "#444444") +
+  tm_shape(slau) +
+  tm_dots(size=0.1, shape = 21) +
+  tm_add_legend("symbol", col = "black", size = 0.3, labels = "Slaughterhouses", title = "") +
+  tm_layout(main.title = "Relative Forest Change and Slaughterhouses", 
+            legend.outside.position = "bottom",
+            legend.outside.size = 0.2,
+            legend.outside = TRUE,
+            frame = FALSE,
+            fontfamily = "Lato")
+```
+
+This visualization builds on Elia's and my try from the lecture, but is coded again from scratch since I cleverly decided to not save the script I used then. The main variable that is plotted as different fill colors of municipalities is the percentual change of forest area from 2003 to 2022. Blue values represent a forest increase, and red values represent forest loss. The more intense a color is, the more pronounced the forest gain/loss. You may notice that there are no numbers in the legend. This is because I used an ordered scale, meaning that heavier deforestation will always be redder, but it cannot be inferred how *much* more heavy deforestation was. This is to more clearly show differences between municipalities, which have either very similar deforestation figures in the region of --50% to --100%, or positive values. Had I used a simple continuous scale, most of the map would be assigned more or less one of two colors (or at least it would look like it). Overlaid are dots representing locations of slaughterhouses. The idea behind this map is to encourage the viewer to perform eyeball econometrics and come to the conclusion that slaughterhouses (1) cluster in (2) red areas. I think that this visualization is appropriate for this cause since it comes to mind as a natural way of evaluating point data against a continuous spatial variable (deforestation). Note that I spent five hours trying to include a basemap background layer, failed to do that using both tmap and ggplot, and then abandoned the idea out of time considerations and thought, “I should have used QGIS.”
+
+\newpage
+
+# Task B
+
+```{r, warning = FALSE, include = FALSE, fig.dim = c(8, 6), out.width="100%", fig.align="center"}
+
+# Header ------------------------------------------------------------------
+
+pacman::p_load(
+  tidyverse,
+  terra,
+  sf,
+  magrittr,
+  ggplot2,
+  tidyterra
+)
+
+rstr <- terra::rast("./assignment4/data/aggregated_raster_start.tif")
+rstg <- terra::rast("./assignment4/data/aggregated_raster_gain.tif")
+rstl <- terra::rast("./assignment4/data/aggregated_raster_lossyear.tif")
+
+shp0 <- st_read("./assignment4/data/gadm41_AUT_0.shp")
+
+```
+
+I begin by creating the following visualization of the “forest cover 2000” band from portions of two adjacent tiles. I aggregated the data quite radically, from a 1 arc second resolution to a 1 arc minute resolution, to make processing and plotting faster. It should suffice for these purposes. The following visualization shows percentage of forest cover in a given cell. This could be more insightful if we knew where this is.
+
+```{r, warning = FALSE, echo = FALSE, fig.dim = c(8, 6), out.width="100%", fig.align="center"}
+
+# Map ---------------------------------------------------------------------
+
+ggplot() +  
+  geom_spatraster(data=rstr, aes(fill=`Hansen_GFC-2022-v1.10_treecover2000_50N_000E`)) +
+  scale_fill_distiller("Forest Cover (%)", palette = "YlGn", direction = 1) +
+  xlim(c(9, 18)) +
+  ylim(c(46, 49.5)) +
+  coord_sf() +
+  labs(title = "Tree Cover in 2000") +
+  theme_bw() +
+  theme(
+    text = element_text(family = "Lato")
+  )
+
+```
+
+Thus, the following visualization adds the borders of Austria. We now know where we are and can more easily interpret the data. We can see that forest cover is very high in mountaineous areas, with the exception of regions at high altitude, and lowest in regions where many people live. This makes intuitive sense.
+
+```{r, warning = FALSE, echo = FALSE, fig.dim = c(8, 6), out.width="100%", fig.align="center"}
+
+ggplot() +  
+  geom_spatraster(data=rstr, aes(fill=`Hansen_GFC-2022-v1.10_treecover2000_50N_000E`)) +
+  geom_sf(data=shp0, col = "black", lwd = 1.5, fill = "#00000000") +
+  scale_fill_distiller("Forest Cover (%)", palette = "YlGn", direction = 1) +
+  xlim(c(9, 18)) +
+  ylim(c(46, 49.5)) +
+  coord_sf() +
+  labs(title = "Tree Cover in 2000") +
+  theme_bw() +
+  theme(
+    text = element_text(family = "Lato")
+  )
+
+```
+
+Because the provided data has more information than just forest cover in 2000, I created two other, maybe more insightful visualizations. In the first of these two, red cells represent areas where at least one original cell experienced forest _gain_ between 2000 and 2012. We can see that most 1-arc-minute cells have at least one 1-arc-second cell in them that was transformed to forest within that time frame.
+
+```{r, warning = FALSE, echo = FALSE, fig.dim = c(8, 6), out.width="100%", fig.align="center"}
+
+ggplot() +  
+  geom_spatraster(data=rstg, aes(fill=`Hansen_GFC-2022-v1.10_gain_50N_000E`)) +
+  geom_sf(data=shp0, col = "black", lwd = 1.5, fill = "#00000000") +
+  scale_fill_distiller("Forest Gain", palette = "Reds", direction = 1) +
+  xlim(c(9, 18)) +
+  ylim(c(46, 49.5)) +
+  coord_sf() +
+  labs(title = "Forest Gain 2000–2012",
+       subtitle = "Dark = Gain Somewhere, Light = No Gain") +
+  theme_bw() +
+  guides(fill="none") +
+  theme(
+    text = element_text(family = "Lato")
+  )
+
+```
+
+The second additional visualization shows when the most recent deforestation event for each cell happened. This means that if a cell is colored in the color representing “2020,” then some pixel inside the aggregated cell experienced deforestation in 2020, and no pixel experienced deforestation later than 2020.
+
+```{r, warning = FALSE, echo = FALSE, fig.dim = c(8, 6), out.width="100%", fig.align="center"}
+
+ggplot() +  
+  geom_spatraster(data=rstl, aes(fill=Layer_1)) +
+  geom_sf(data=shp0, col = "black", lwd = 1.5, fill = "#00000000") +
+  scale_fill_distiller("Year", palette = "Spectral", direction = 1,  labels = c("none", "2005", "2010", "2015", "2020")) +
+  xlim(c(9, 18)) +
+  ylim(c(46, 49.5)) +
+  coord_sf() +
+  labs(title = "Most Recent Deforestation Event per Cell") +
+  theme_bw() +
+  theme(
+    text = element_text(family = "Lato")
+  )
+
+```
+
+We can see that red cells, meaning those where no deforestation at all happened, cluster in southwestern Tyrol and northeastern Lower Austria. This coincides with areas where there was also no forest _gain_. It also coincides with low-forest areas from the original visualization. Thus, a likely explanation for why there was no deforestation at all in these cells is that there is just not too much happening in terms of forest there.
+
+What if we now create a visualization without any spatial information? To discuss this, I subset the data to cells within Austria (as opposed to the above visualization) and plot a histogram of cell values. To facilitate interpretation, colors are kept the same as in the previous visualization.
+
+```{r, warning = FALSE, echo = FALSE, fig.dim = c(8, 6), out.width="100%", fig.align="center"}
+
+
+# Histogram ---------------------------------------------------------------
+
+terra::extract(rstl, shp0) %>%
+  pluck("Layer_1") %>%
+  table() %>%
+  as_tibble() %>%
+  mutate(year = 2000 + as.integer(`.`)) %>%
+  ggplot() +
+  geom_bar(aes(x = year, y = n, fill = year), col = "black", stat = "identity") +
+  scale_fill_distiller("Year", palette = "Spectral", direction = 1, labels = c("none", "2005", "2010", "2015", "2020")) +
+  guides(fill = "none") +
+  labs(title = "Most Recent Deforestation Event per Cell, Within Austria, Histogram") +
+  theme_bw() +
+  theme(
+    text = element_text(family = "Lato")
+  )
+
+```
+
+While we _could guess_ from the map that 2022 is the most common value, determining whether 2020 and 2021 are more common than “none” or not is difficult. This kind of information can be more easily read off the histogram. However, since I stripped the data of all its spatial information, every nuance of _where_ is missing. We could not relate the count of “no deforestation” cells with any spatial explanations, such as terrain, population patterns, spatial autocorrelation with other no-deforestation cells, and so on.
+
+\newpage
+
+# Task C
+
+texyr
+
+
+
+
