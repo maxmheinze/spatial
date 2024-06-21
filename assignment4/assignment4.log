@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.4.27)  13 JUN 2024 15:23
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.4.27)  21 JUN 2024 10:16
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1223,7 +1223,7 @@ used on input line 185.
 s/figure-latex/unnamed-chunk-6-1.pdf>] [5 <./assignment4_files/figure-latex/unn
 amed-chunk-7-1.pdf>]
 
-LaTeX Warning: Empty bibliography on input line 202.
+LaTeX Warning: Empty bibliography on input line 247.
 
 [6] (./assignment4.aux)
  ***********
@@ -1237,7 +1237,7 @@ Package logreq Info: Writing requests to 'assignment4.run.xml'.
 Here is how much of TeX's memory you used:
  32843 strings out of 474104
  623186 string characters out of 5743467
- 1933493 words of memory out of 5000000
+ 1935493 words of memory out of 5000000
  54685 multiletter control sequences out of 15000+600000
  761856 words of font info for 94 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -1245,7 +1245,7 @@ Here is how much of TeX's memory you used:
 </usr/local/texlive/2024/texmf-dist/fonts/type1/typoland/lato/Lato-Bold.pfb><
 /usr/local/texlive/2024/texmf-dist/fonts/type1/typoland/lato/Lato-Italic.pfb></
 usr/local/texlive/2024/texmf-dist/fonts/type1/typoland/lato/Lato-Regular.pfb>
-Output written on assignment4.pdf (6 pages, 2575653 bytes).
+Output written on assignment4.pdf (6 pages, 2578750 bytes).
 PDF statistics:
  116 PDF objects out of 1000 (max. 8388607)
  76 compressed objects within 1 object stream

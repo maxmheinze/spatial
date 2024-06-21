@@ -2,7 +2,7 @@
 title: '**Spatial Economics -- Assignment 4**'
 author: 
   - "Max Heinze (h11742049@s.wu.ac.at)"
-date: "June 16, 2024"
+date: "June 21, 2024"
 output: 
   pdf_document:
     toc: true
@@ -237,7 +237,19 @@ While we _could guess_ from the map that 2022 is the most common value, determin
 
 # Task C
 
-texyr
+I fear I do not completely understand the way the question is asked, I will attempt an answer in the following anyway.
+
+First, I am not sure whether we should consider the _same_ type of connections at every level of aggregation. I find very few variables that would make sense at any level of aggregation. One variable that would make sense is trade flows.
+
+So consider the following networks: On the individual level, Alice trades with Bob, Bob trades with Alice, they may even trade with a person whose name starts with C, and so on. On the sub-state group level, towns may trade with one another. On the state level, there is trade happening too. As for the planet level, it is a known fact that the sum of all trade balances is positive, so there probably is trade with space too. The advantage here is that trade flows can be measured in monetary (or even real goods) terms on every level of aggregation.
+
+On the individual level, I expect the network to be least dense. Every individual has only so much time, and they can only interact with so many people. Thus, the probability of there being a link between two randomly drawn people is probably low. On any more general level of aggregation, density may increase since the probability that _somebody_ from New York is trading with _somebody_ from Chicago is much higher than for any two individual people from these cities.
+
+Regarding centrality, I expect there to be a much more even centrality distribution at higher levels of aggregation. At the individual level, I expect there to be very few agents who are very central, e.g., because they trade with a product that is in high demand. If we look at the other side of the aggregation scale, there are countries that trade more and countries that trade less, but the differences are probably smaller.
+
+If links are trade links, I expect them to be influenced by personal ties between people, wealth, and regional proximity. If two people are good friends, I would expect them to trade more just because they interact more with another. I also would expect wealthy people to trade more since trade is most often conducted goods against money, and with more money, you can trade more goods. Regional proximity may play a role because increasing distance means increasing transportation costs.
+
+On the individual level, I expect the personal ties mechanism to be much stronger. On higher levels of aggregation, I would expect the regional proximity channel to predominate, just because individual connections do not matter as much on these levels. Wealth is probably a factor on any level of aggregation.
 
 
 
